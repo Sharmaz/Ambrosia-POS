@@ -37,7 +37,7 @@ function NavBarButton({ text, icon, onClick, isActive }) {
   );
 }
 
-export default function ModuleNavigation({ children }) {
+export default function ModuleNavigation({ children, show }) {
   const pathname = usePathname();
   const router = useRouter();
   const { logout } = useContext(AuthContext);
@@ -50,9 +50,13 @@ export default function ModuleNavigation({ children }) {
     return <LoadingCard message="Cargando módulos..." />;
   }
 
+  if (show === 'none') {
+    return <>{children}</>;
+  }
+
   return (
     <div className="flex w-screen h-screen">
-      <aside className="w-1/6 h-full bg-[#1c7c54] flex flex-col">
+      <aside className="w-1/6 h-full bg-primary-500 flex flex-col">
         <div className="h-[25%] flex flex-col items-center justify-end pb-4">
           <Link
             href={isAuthenticated ? getHomeRoute(user) : "/auth"}
