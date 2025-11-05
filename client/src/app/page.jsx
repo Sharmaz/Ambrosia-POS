@@ -5,7 +5,7 @@ import { useContext } from "react";
 import { AuthContext } from "../modules/auth/AuthProvider";
 import { getHomeRoute } from "../lib/getHomeRoute";
 import LoadingCard from "../components/LoadingCard";
-import { OnboardingWizard } from "../components/OnboardingWizard";
+import { Onboarding } from "../components/Onboarding";
 
 export default function HomePage() {
   const router = useRouter();
@@ -24,6 +24,6 @@ export default function HomePage() {
   // }, [isAuthenticated, user, isLoading, router]);
 
   return (
-    <OnboardingWizard />
+    <Onboarding />
   );
 }
