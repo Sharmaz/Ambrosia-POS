@@ -75,14 +75,12 @@ fun scheduleDockerRestart() {
 }
 
 fun computePhoenixdWebhookUrl(
-    phoenixdRemote: Boolean,
     docker: Boolean,
     httpBindIp: String,
     httpBindPort: Int,
 ): String {
     val host =
         when {
-            phoenixdRemote -> "<ambrosia-host>"
             docker -> "ambrosia"
             httpBindIp == "0.0.0.0" || httpBindIp == "::" -> "127.0.0.1"
             else -> httpBindIp
@@ -202,7 +200,7 @@ class Ambrosia : CliktCommand() {
                 help = "webhook URL to register in phoenix.conf (webhook=<url>)",
                 envvar = "PHOENIXD_WEBHOOK_URL",
             ).defaultLazy {
-                computePhoenixdWebhookUrl(phoenixdRemote, docker, httpBindIp, httpBindPort)
+                computePhoenixdWebhookUrl(docker, httpBindIp, httpBindPort)
             }
         val webPushVapidPublicKey by
             option(
@@ -253,13 +251,10 @@ class Ambrosia : CliktCommand() {
                                     put("jwt.issuer", TokenService.JWT_ISSUER)
                                     put("jwt.audience", TokenService.JWT_AUDIENCE)
                                     put("docker", options.docker.toString())
-                                    put("http-bind-ip", options.httpBindIp)
-                                    put("http-bind-port", options.httpBindPort.toString())
                                     put("secret", options.secret)
                                     put("phoenixd-url", options.phoenixdUrl)
                                     put("phoenixd-password", options.phoenixdPassword)
                                     put("phoenixd-remote", options.phoenixdRemote.toString())
-                                    put("phoenixd-webhook-url", options.phoenixdWebhookUrl)
                                     put("phoenix.webhook-secret", options.phoenixdWebhookSecret)
                                     options.nwcUri?.let { put("nwc-uri", it) }
                                     options.webPushVapidPublicKey.takeIf { it.isNotBlank() }?.let {
@@ -302,7 +297,8 @@ class Ambrosia : CliktCommand() {
                 options.phoenixdRemote -> {
                     logger.info(
                         "Remote phoenixd mode active, skipping local Phoenix webhook configuration. " +
-                            "Register webhook=${options.phoenixdWebhookUrl} in the remote node's phoenix.conf",
+                            "Payment notifications are received via an outbound WebSocket connection " +
+                            "to the remote node — no phoenix.conf webhook setup needed.",
                     )
                 }
 

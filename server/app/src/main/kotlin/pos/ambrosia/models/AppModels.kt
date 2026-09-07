@@ -91,11 +91,6 @@ data class TestPhoenixdConnectionRequest(
 )
 
 @Serializable
-data class PhoenixdWebhookUrlResponse(
-    val webhookUrl: String,
-)
-
-@Serializable
 data class PhoenixdRemoteStatusResponse(
     val phoenixdRemote: Boolean,
 )

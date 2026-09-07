@@ -18,7 +18,6 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import kotlinx.io.files.Path
-import pos.ambrosia.computePhoenixdWebhookUrl
 import pos.ambrosia.config.AppConfig
 import pos.ambrosia.config.readConfValues
 import pos.ambrosia.config.replaceConfFileProperty
@@ -28,7 +27,6 @@ import pos.ambrosia.models.IncomingPaymentWithRate
 import pos.ambrosia.models.Message
 import pos.ambrosia.models.OutgoingPaymentWithRate
 import pos.ambrosia.models.PhoenixdRemoteStatusResponse
-import pos.ambrosia.models.PhoenixdWebhookUrlResponse
 import pos.ambrosia.models.RolePassword
 import pos.ambrosia.models.TestPhoenixdConnectionRequest
 import pos.ambrosia.models.UpdateNwcUriRequest
@@ -244,25 +242,6 @@ fun Route.wallet(
                     testConnectionRequest.phoenixdPassword,
                 )
             call.respond(HttpStatusCode.OK, candidateNodeInfo)
-        }
-        get("/phoenixd-webhook-url") {
-            val phoenixdRemote = readConfValues(Path(datadir, "ambrosia.conf"))["phoenixd-remote"].toBoolean()
-            val docker =
-                call.application.environment.config
-                    .propertyOrNull("docker")
-                    ?.getString()
-                    .toBoolean()
-            val httpBindIp =
-                call.application.environment.config
-                    .propertyOrNull("http-bind-ip")
-                    ?.getString() ?: ""
-            val httpBindPort =
-                call.application.environment.config
-                    .propertyOrNull("http-bind-port")
-                    ?.getString()
-                    ?.toIntOrNull() ?: 0
-            val webhookUrl = computePhoenixdWebhookUrl(phoenixdRemote, docker, httpBindIp, httpBindPort)
-            call.respond(HttpStatusCode.OK, PhoenixdWebhookUrlResponse(webhookUrl))
         }
         post("/createinvoice") {
             val createInvoiceRequest = call.receive<CreateInvoiceRequest>()

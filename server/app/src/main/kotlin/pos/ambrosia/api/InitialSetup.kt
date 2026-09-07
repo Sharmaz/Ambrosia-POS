@@ -15,8 +15,6 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import pos.ambrosia.computePhoenixdWebhookUrl
-import pos.ambrosia.config.readConfValues
 import pos.ambrosia.datadir
 import pos.ambrosia.logger
 import pos.ambrosia.models.BackupProgressPhase
@@ -24,7 +22,6 @@ import pos.ambrosia.models.Config
 import pos.ambrosia.models.InitialSetupRequest
 import pos.ambrosia.models.InitialSetupResponse
 import pos.ambrosia.models.InitialSetupStatus
-import pos.ambrosia.models.PhoenixdWebhookUrlResponse
 import pos.ambrosia.models.Role
 import pos.ambrosia.models.TestPhoenixdConnectionRequest
 import pos.ambrosia.models.User
@@ -231,30 +228,6 @@ private fun Route.initialSetupRoutes() {
                 phoenixdRemoteSaved = phoenixdRemoteSaved,
             ),
         )
-    }
-
-    get("/phoenixd-webhook-url") {
-        val configService = ConfigService()
-        if (call.respondConflictIfInitialSetupCompleted(configService)) return@get
-
-        val phoenixdRemote =
-            readConfValues(kotlinx.io.files.Path(datadir, "ambrosia.conf"))["phoenixd-remote"].toBoolean()
-        val docker =
-            call.application.environment.config
-                .propertyOrNull("docker")
-                ?.getString()
-                .toBoolean()
-        val httpBindIp =
-            call.application.environment.config
-                .propertyOrNull("http-bind-ip")
-                ?.getString() ?: ""
-        val httpBindPort =
-            call.application.environment.config
-                .propertyOrNull("http-bind-port")
-                ?.getString()
-                ?.toIntOrNull() ?: 0
-        val webhookUrl = computePhoenixdWebhookUrl(phoenixdRemote, docker, httpBindIp, httpBindPort)
-        call.respond(HttpStatusCode.OK, PhoenixdWebhookUrlResponse(webhookUrl))
     }
 
     post("/test-phoenixd-connection") {
