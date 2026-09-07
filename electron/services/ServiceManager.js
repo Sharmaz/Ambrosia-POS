@@ -67,10 +67,11 @@ class ServiceManager extends EventEmitter {
       logger.log('[ServiceManager] Production mode: starting all bundled services');
 
       const nwcUriConfigured = Boolean(this.configs.ambrosia['nwc-uri']);
+      const phoenixdRemoteConfigured = this.configs.ambrosia['phoenixd-remote'] === 'true';
 
-      // Step 1: Start Phoenixd, unless NWC is the configured Lightning backend
-      if (nwcUriConfigured) {
-        logger.log('[ServiceManager] Step 1: NWC is the configured backend, skipping Phoenixd startup');
+      if (nwcUriConfigured || phoenixdRemoteConfigured) {
+        const skipReason = nwcUriConfigured ? 'NWC is the configured backend' : 'a remote phoenixd node is configured';
+        logger.log(`[ServiceManager] Step 1: ${skipReason}, skipping Phoenixd startup`);
         this.externalServices.phoenixd = true;
         this.emit('service:started', { service: 'phoenixd', port: this.ports.phoenixd, skipped: true });
       } else {
@@ -88,7 +89,6 @@ class ServiceManager extends EventEmitter {
         this.emit('service:started', { service: 'phoenixd', port: this.ports.phoenixd });
       }
 
-      // Step 2: Check if backend is already running on default port
       logger.log('[ServiceManager] Step 2: Checking for existing Backend...');
       const backendAlreadyRunning = await isBackendRunning(DEFAULT_PORTS.backend);
 
@@ -106,7 +106,6 @@ class ServiceManager extends EventEmitter {
       }
       this.emit('service:started', { service: 'backend', port: this.ports.backend });
 
-      // Step 3: Start Next.js (always start our own)
       logger.log('[ServiceManager] Step 3: Starting Next.js...');
       const result = await this.nextjsService.start(this.ports.nextjs, {
         host: '127.0.0.1',

@@ -86,7 +86,11 @@ async function ensureConfigurations(ports) {
     needsUpdate = true;
   } else {
     ambrosiaConfig['http-bind-port'] = ports.backend.toString();
-    ambrosiaConfig['phoenixd-url'] = `http://localhost:${ports.phoenixd}`;
+
+    const phoenixdRemoteConfigured = ambrosiaConfig['phoenixd-remote'] === 'true';
+    if (!phoenixdRemoteConfigured) {
+      ambrosiaConfig['phoenixd-url'] = `http://localhost:${ports.phoenixd}`;
+    }
   }
 
   if (!fs.existsSync(phoenixConfigPath) || Object.keys(phoenixConfig).length === 0) {
