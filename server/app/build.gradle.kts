@@ -30,6 +30,7 @@ dependencies {
     implementation(libs.ktor.client.cio)
     implementation(libs.ktor.client.auth)
     implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.client.websockets)
     implementation(libs.ktor.serialization.kotlinx.json)
 
     implementation(libs.logback.classic)
@@ -61,7 +62,6 @@ dependencies {
     testImplementation(libs.mockito.kotlin)
     testImplementation(libs.mockito.core)
     testImplementation(libs.ktor.client.mock)
-    testImplementation(libs.ktor.client.websockets)
     testImplementation(libs.ktor.server.test.host)
 }
 

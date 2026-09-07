@@ -4,6 +4,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.PartData
 import io.ktor.http.content.forEachPart
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.request.contentLength
 import io.ktor.server.request.receive
 import io.ktor.server.request.receiveMultipart
@@ -14,6 +15,8 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import pos.ambrosia.computePhoenixdWebhookUrl
+import pos.ambrosia.config.readConfValues
 import pos.ambrosia.datadir
 import pos.ambrosia.logger
 import pos.ambrosia.models.BackupProgressPhase
@@ -21,7 +24,9 @@ import pos.ambrosia.models.Config
 import pos.ambrosia.models.InitialSetupRequest
 import pos.ambrosia.models.InitialSetupResponse
 import pos.ambrosia.models.InitialSetupStatus
+import pos.ambrosia.models.PhoenixdWebhookUrlResponse
 import pos.ambrosia.models.Role
+import pos.ambrosia.models.TestPhoenixdConnectionRequest
 import pos.ambrosia.models.User
 import pos.ambrosia.scheduleDockerRestart
 import pos.ambrosia.services.ActiveLightningBackend
@@ -29,6 +34,7 @@ import pos.ambrosia.services.BackupService
 import pos.ambrosia.services.ConfigService
 import pos.ambrosia.services.CurrencyService
 import pos.ambrosia.services.PermissionsService
+import pos.ambrosia.services.PhoenixService
 import pos.ambrosia.services.RolesService
 import pos.ambrosia.services.TokenService
 import pos.ambrosia.services.UsersService
@@ -42,6 +48,12 @@ import java.time.ZoneId
 import java.util.UUID
 
 private const val ONBOARDING_PROGRESS_TOKEN_USER_ID = "onboarding"
+
+private suspend fun ApplicationCall.respondConflictIfInitialSetupCompleted(configService: ConfigService): Boolean {
+    if (configService.getConfig() == null) return false
+    respond(HttpStatusCode.Conflict, mapOf("message" to "Initial setup already completed"))
+    return true
+}
 
 fun Application.configureInitialSetup() {
     routing {
@@ -186,6 +198,29 @@ private fun Route.initialSetupRoutes() {
                 }
             } ?: false
 
+        val trimmedPhoenixdUrl = initialSetupRequest.phoenixdUrl?.trim()
+        val phoenixdPassword = initialSetupRequest.phoenixdPassword
+        val phoenixdRemoteSaved =
+            if (
+                initialSetupRequest.phoenixdRemote != true ||
+                trimmedPhoenixdUrl.isNullOrBlank() ||
+                phoenixdPassword.isNullOrBlank()
+            ) {
+                false
+            } else {
+                try {
+                    File(datadir.toString(), "ambrosia.conf").appendText(
+                        "\nphoenixd-remote=true\nphoenixd-url=$trimmedPhoenixdUrl\nphoenixd-password=$phoenixdPassword\n",
+                    )
+                    logger.info("Remote phoenixd node saved to ambrosia.conf — hot-reloading backend")
+                    ActiveLightningBackend.reinitializePhoenixBackend(trimmedPhoenixdUrl, phoenixdPassword)
+                    true
+                } catch (exception: Exception) {
+                    logger.error("Failed to save or activate remote phoenixd node: ${exception.message}")
+                    false
+                }
+            }
+
         call.respond(
             HttpStatusCode.Created,
             InitialSetupResponse(
@@ -193,16 +228,51 @@ private fun Route.initialSetupRoutes() {
                 userId = userId,
                 roleId = roleId,
                 nwcSaved = nwcSaved,
+                phoenixdRemoteSaved = phoenixdRemoteSaved,
             ),
         )
     }
 
+    get("/phoenixd-webhook-url") {
+        val configService = ConfigService()
+        if (call.respondConflictIfInitialSetupCompleted(configService)) return@get
+
+        val phoenixdRemote =
+            readConfValues(kotlinx.io.files.Path(datadir, "ambrosia.conf"))["phoenixd-remote"].toBoolean()
+        val docker =
+            call.application.environment.config
+                .propertyOrNull("docker")
+                ?.getString()
+                .toBoolean()
+        val httpBindIp =
+            call.application.environment.config
+                .propertyOrNull("http-bind-ip")
+                ?.getString() ?: ""
+        val httpBindPort =
+            call.application.environment.config
+                .propertyOrNull("http-bind-port")
+                ?.getString()
+                ?.toIntOrNull() ?: 0
+        val webhookUrl = computePhoenixdWebhookUrl(phoenixdRemote, docker, httpBindIp, httpBindPort)
+        call.respond(HttpStatusCode.OK, PhoenixdWebhookUrlResponse(webhookUrl))
+    }
+
+    post("/test-phoenixd-connection") {
+        val configService = ConfigService()
+        if (call.respondConflictIfInitialSetupCompleted(configService)) return@post
+
+        val testConnectionRequest = call.receive<TestPhoenixdConnectionRequest>()
+        val candidateNodeInfo =
+            PhoenixService.testCandidateNodeConnection(
+                testConnectionRequest.phoenixdUrl,
+                testConnectionRequest.phoenixdPassword,
+            )
+        call.respond(HttpStatusCode.OK, candidateNodeInfo)
+    }
+
     post("/restore") {
         val configService = ConfigService()
-        if (configService.getConfig() != null) {
-            call.respond(HttpStatusCode.Conflict, mapOf("message" to "Initial setup already completed"))
-            return@post
-        }
+        if (call.respondConflictIfInitialSetupCompleted(configService)) return@post
 
         var backupPassword: String? = null
         var operationId: String? = null
@@ -266,10 +336,7 @@ private fun Route.initialSetupRoutes() {
 
     post("/progress-token") {
         val configService = ConfigService()
-        if (configService.getConfig() != null) {
-            call.respond(HttpStatusCode.Conflict, mapOf("message" to "Initial setup already completed"))
-            return@post
-        }
+        if (call.respondConflictIfInitialSetupCompleted(configService)) return@post
 
         val operationId = UUID.randomUUID().toString()
         val tokenService = TokenService(call.application.environment)
@@ -279,10 +346,7 @@ private fun Route.initialSetupRoutes() {
 
     post("/confirm-pending-restore") {
         val configService = ConfigService()
-        if (configService.getConfig() != null) {
-            call.respond(HttpStatusCode.Conflict, mapOf("message" to "Initial setup already completed"))
-            return@post
-        }
+        if (call.respondConflictIfInitialSetupCompleted(configService)) return@post
 
         val backupService = BackupService()
         backupService.stagedOperationId()?.let { operationId ->

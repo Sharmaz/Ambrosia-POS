@@ -74,6 +74,22 @@ fun scheduleDockerRestart() {
     }
 }
 
+fun computePhoenixdWebhookUrl(
+    phoenixdRemote: Boolean,
+    docker: Boolean,
+    httpBindIp: String,
+    httpBindPort: Int,
+): String {
+    val host =
+        when {
+            phoenixdRemote -> "<ambrosia-host>"
+            docker -> "ambrosia"
+            httpBindIp == "0.0.0.0" || httpBindIp == "::" -> "127.0.0.1"
+            else -> httpBindIp
+        }
+    return "http://$host:$httpBindPort/webhook/phoenixd"
+}
+
 class Ambrosia : CliktCommand() {
     val appVersion: String = Ambrosia::class.java.getPackage().implementationVersion ?: "-dev"
     private val confFile = Path(datadir, "ambrosia.conf")
@@ -130,7 +146,11 @@ class Ambrosia : CliktCommand() {
                 envvar = "NWC_URI",
             )
         val phoenixdUrl by
-            option("--phoenixd-url", help = "phoenixd API url, eg http://phoenixd:9740").defaultLazy {
+            option(
+                "--phoenixd-url",
+                help = "phoenixd API url, eg http://phoenixd:9740",
+                envvar = "PHOENIXD_URL",
+            ).defaultLazy {
                 val value = "http://localhost:9740" // Default value
                 SystemFileSystem.sink(this@Ambrosia.confFile, append = true).buffered().use {
                     it.writeString("\nphoenixd-url=$value")
@@ -152,6 +172,12 @@ class Ambrosia : CliktCommand() {
                         )
                 value
             }
+        val phoenixdRemote by
+            option(
+                "--phoenixd-remote",
+                help = "Connect to a phoenixd node running remotely instead of a local one",
+                envvar = "PHOENIXD_REMOTE",
+            ).flag()
         val jwtAccessTokenExpirationSeconds by
             option("--jwt-access-token-expiration", help = "Access token expiration in seconds").default("60")
         val phoenixdWebhookSecret by
@@ -176,13 +202,7 @@ class Ambrosia : CliktCommand() {
                 help = "webhook URL to register in phoenix.conf (webhook=<url>)",
                 envvar = "PHOENIXD_WEBHOOK_URL",
             ).defaultLazy {
-                val host =
-                    when {
-                        docker -> "ambrosia"
-                        httpBindIp == "0.0.0.0" || httpBindIp == "::" -> "127.0.0.1"
-                        else -> httpBindIp
-                    }
-                "http://$host:$httpBindPort/webhook/phoenixd"
+                computePhoenixdWebhookUrl(phoenixdRemote, docker, httpBindIp, httpBindPort)
             }
         val webPushVapidPublicKey by
             option(
@@ -233,9 +253,13 @@ class Ambrosia : CliktCommand() {
                                     put("jwt.issuer", TokenService.JWT_ISSUER)
                                     put("jwt.audience", TokenService.JWT_AUDIENCE)
                                     put("docker", options.docker.toString())
+                                    put("http-bind-ip", options.httpBindIp)
+                                    put("http-bind-port", options.httpBindPort.toString())
                                     put("secret", options.secret)
                                     put("phoenixd-url", options.phoenixdUrl)
                                     put("phoenixd-password", options.phoenixdPassword)
+                                    put("phoenixd-remote", options.phoenixdRemote.toString())
+                                    put("phoenixd-webhook-url", options.phoenixdWebhookUrl)
                                     put("phoenix.webhook-secret", options.phoenixdWebhookSecret)
                                     options.nwcUri?.let { put("nwc-uri", it) }
                                     options.webPushVapidPublicKey.takeIf { it.isNotBlank() }?.let {
@@ -270,10 +294,21 @@ class Ambrosia : CliktCommand() {
                     module = { Api().run { module() } },
                 )
             runningEmbeddedServer = server
-            if (options.nwcUri == null) {
-                ensurePhoenixWebhookConfigured(options.phoenixdWebhookUrl)
-            } else {
-                logger.info("NWC mode active, skipping Phoenix webhook configuration")
+            when {
+                options.nwcUri != null -> {
+                    logger.info("NWC mode active, skipping Phoenix webhook configuration")
+                }
+
+                options.phoenixdRemote -> {
+                    logger.info(
+                        "Remote phoenixd mode active, skipping local Phoenix webhook configuration. " +
+                            "Register webhook=${options.phoenixdWebhookUrl} in the remote node's phoenix.conf",
+                    )
+                }
+
+                else -> {
+                    ensurePhoenixWebhookConfigured(options.phoenixdWebhookUrl)
+                }
             }
             server.start(wait = true)
         } catch (e: Exception) {

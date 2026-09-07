@@ -52,7 +52,7 @@ interface PaymentVerifier {
 }
 
 class PhoenixService(
-    app: ApplicationEnvironment,
+    private val phoenixdUrl: String,
     private val httpClient: HttpClient,
 ) : PaymentVerifier,
     LightningBackend {
@@ -69,31 +69,52 @@ class PhoenixService(
                 ignoreUnknownKeys = true
                 prettyPrint = true
             }
+
+        private fun buildHttpClient(phoenixdPassword: String): HttpClient =
+            HttpClient(CIO) {
+                install(Auth) {
+                    basic {
+                        credentials {
+                            BasicAuthCredentials(username = "", password = phoenixdPassword)
+                        }
+                    }
+                }
+                install(ContentNegotiation) {
+                    json(phoenixJson)
+                }
+            }
+
+        suspend fun testCandidateNodeConnection(
+            candidateUrl: String,
+            candidatePassword: String,
+        ): NodeInfo {
+            val candidateService = PhoenixService(candidateUrl, candidatePassword)
+            try {
+                return candidateService.getNodeInfo()
+            } finally {
+                candidateService.close()
+            }
+        }
     }
 
-    private val config = app.config
-    private val phoenixdUrl = config.property("phoenixd-url").getString()
     private val ambrosiaVersion =
         PhoenixService::class.java.`package`?.implementationVersion ?: "dev"
 
+    constructor(app: ApplicationEnvironment, httpClient: HttpClient) : this(
+        app.config.property("phoenixd-url").getString(),
+        httpClient,
+    )
+
     constructor(app: ApplicationEnvironment) : this(
         app,
-        HttpClient(CIO) {
-            install(Auth) {
-                basic {
-                    credentials {
-                        BasicAuthCredentials(
-                            username = "",
-                            password = app.config.property("phoenixd-password").getString(),
-                        )
-                    }
-                }
-            }
-            install(ContentNegotiation) {
-                json(phoenixJson)
-            }
-        },
+        buildHttpClient(app.config.property("phoenixd-password").getString()),
     )
+
+    constructor(phoenixdUrl: String, phoenixdPassword: String) : this(phoenixdUrl, buildHttpClient(phoenixdPassword))
+
+    override fun close() {
+        httpClient.close()
+    }
 
     //region Payments
 
