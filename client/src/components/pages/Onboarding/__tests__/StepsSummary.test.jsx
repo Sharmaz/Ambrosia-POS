@@ -67,6 +67,32 @@ describe("Step 4 Summary", () => {
     expect(screen.getByText(`step4.sections.adminAccount.password: ${masked}`)).toBeInTheDocument();
   });
 
+  it("shows the remote phoenixd summary line with the url when configured", async () => {
+    const dataWithPhoenixdRemote = {
+      ...baseData,
+      walletBackend: "phoenixd",
+      phoenixdRemote: true,
+      phoenixdUrl: "http://100.1.1.1:9740",
+    };
+
+    await act(async () => {
+      render(<WizardSummary data={dataWithPhoenixdRemote} onEdit={mockOnEdit} />);
+    });
+
+    expect(document.body.textContent).toContain("step4.sections.walletBackend.phoenixdRemote");
+    expect(document.body.textContent).toContain("http://100.1.1.1:9740");
+  });
+
+  it("does not show the remote phoenixd summary line when not configured", async () => {
+    const dataWithLocalPhoenixd = { ...baseData, walletBackend: "phoenixd", phoenixdRemote: false };
+
+    await act(async () => {
+      render(<WizardSummary data={dataWithLocalPhoenixd} onEdit={mockOnEdit} />);
+    });
+
+    expect(screen.queryByText("step4.sections.walletBackend.phoenixdRemote")).not.toBeInTheDocument();
+  });
+
   it("renders the store logo if provided", async () => {
     const file = new File(["fake"], "logo.png", { type: "image/png" });
     const dataWithLogo = { ...baseData, businessLogo: file };

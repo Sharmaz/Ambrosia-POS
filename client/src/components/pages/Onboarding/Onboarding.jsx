@@ -38,6 +38,9 @@ export function Onboarding() {
     businessType: "store",
     walletBackend: "phoenixd",
     nwcUri: "",
+    phoenixdRemote: false,
+    phoenixdUrl: "",
+    phoenixdPassword: "",
     userName: "",
     userPassword: "",
     userPasswordConfirmation: "",
@@ -128,6 +131,8 @@ export function Onboarding() {
         logoUrl = uploaded?.url ?? uploaded?.path;
       }
 
+      const isPhoenixdRemoteAttempt = data.walletBackend === "phoenixd" && Boolean(data.phoenixdRemote);
+
       const setupResponse = await submitInitialSetup({
         ...data,
         businessLogoUrl: logoUrl,
@@ -135,20 +140,25 @@ export function Onboarding() {
         userPasswordConfirmation: undefined,
         walletBackend: undefined,
         nwcUri: data.walletBackend === "nwc" && data.nwcUri ? data.nwcUri : undefined,
+        phoenixdRemote: isPhoenixdRemoteAttempt ? true : undefined,
+        phoenixdUrl: isPhoenixdRemoteAttempt ? data.phoenixdUrl : undefined,
+        phoenixdPassword: isPhoenixdRemoteAttempt ? data.phoenixdPassword : undefined,
       });
 
       const isNwcAttempt = data.walletBackend === "nwc";
       let nwcSaved = false;
+      let phoenixdRemoteSaved = false;
       try {
         const body = await setupResponse.json();
         nwcSaved = Boolean(body?.nwcSaved);
+        phoenixdRemoteSaved = Boolean(body?.phoenixdRemoteSaved);
       } catch {}
 
       addRedirectToast({
         title: onboardingTranslations("submitOnboardingToast.title"),
         description: onboardingTranslations("submitOnboardingToast.description"),
         color: "success",
-        onClose: isNwcAttempt ? undefined : () => window.location.reload(),
+        onClose: (isNwcAttempt || isPhoenixdRemoteAttempt) ? undefined : () => window.location.reload(),
       });
 
       if (nwcSaved) {
@@ -162,6 +172,20 @@ export function Onboarding() {
         addRedirectToast({
           title: onboardingTranslations("submitOnboardingToast.nwcErrorTitle"),
           description: onboardingTranslations("submitOnboardingToast.nwcErrorDescription"),
+          color: "danger",
+          onClose: () => window.location.reload(),
+        });
+      } else if (phoenixdRemoteSaved) {
+        addRedirectToast({
+          title: onboardingTranslations("submitOnboardingToast.phoenixdRemoteSavedTitle"),
+          description: onboardingTranslations("submitOnboardingToast.phoenixdRemoteSavedDescription"),
+          color: "primary",
+          onClose: () => window.location.reload(),
+        });
+      } else if (isPhoenixdRemoteAttempt) {
+        addRedirectToast({
+          title: onboardingTranslations("submitOnboardingToast.phoenixdRemoteErrorTitle"),
+          description: onboardingTranslations("submitOnboardingToast.phoenixdRemoteErrorDescription"),
           color: "danger",
           onClose: () => window.location.reload(),
         });
@@ -266,7 +290,13 @@ export function Onboarding() {
 
               {step === 4 && (
               <WalletBackendStep
-                data={{ walletBackend: data.walletBackend, nwcUri: data.nwcUri }}
+                data={{
+                  walletBackend: data.walletBackend,
+                  nwcUri: data.nwcUri,
+                  phoenixdRemote: data.phoenixdRemote,
+                  phoenixdUrl: data.phoenixdUrl,
+                  phoenixdPassword: data.phoenixdPassword,
+                }}
                 onChange={(walletData) => handleDataChange(walletData)}
               />
               )}

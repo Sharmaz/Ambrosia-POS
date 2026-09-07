@@ -7,6 +7,8 @@ import { Zap, Server } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { NWC_URI_REGEX } from "@/lib/nwcUri";
+import { getPhoenixdWebhookUrl, testPhoenixdConnection } from "@/services/initialSetupService";
+import { PhoenixdRemoteFields } from "@components/shared/PhoenixdRemoteFields";
 
 export function WalletBackendStep({ data, onChange }) {
   const walletBackendTranslations = useTranslations();
@@ -15,7 +17,13 @@ export function WalletBackendStep({ data, onChange }) {
   const isNwc = !!data.nwcUri || data.walletBackend === "nwc";
 
   const handleSelect = (backend) => {
-    onChange({ walletBackend: backend, nwcUri: backend === "phoenixd" ? "" : data.nwcUri });
+    onChange({
+      walletBackend: backend,
+      nwcUri: backend === "phoenixd" ? "" : data.nwcUri,
+      phoenixdRemote: backend === "nwc" ? false : data.phoenixdRemote,
+      phoenixdUrl: backend === "nwc" ? "" : data.phoenixdUrl,
+      phoenixdPassword: backend === "nwc" ? "" : data.phoenixdPassword,
+    });
   };
 
   const handleUriChange = (val) => {
@@ -79,6 +87,19 @@ export function WalletBackendStep({ data, onChange }) {
           />
           <p className="text-xs text-gray-400">{walletBackendTranslations("stepWallet.uriHint")}</p>
         </div>
+      )}
+
+      {!isNwc && (
+        <PhoenixdRemoteFields
+          phoenixdRemote={Boolean(data.phoenixdRemote)}
+          phoenixdUrl={data.phoenixdUrl || ""}
+          phoenixdPassword={data.phoenixdPassword || ""}
+          onPhoenixdRemoteChange={(phoenixdRemote) => onChange({ phoenixdRemote, walletBackend: "phoenixd" })}
+          onPhoenixdUrlChange={(phoenixdUrl) => onChange({ phoenixdUrl, walletBackend: "phoenixd" })}
+          onPhoenixdPasswordChange={(phoenixdPassword) => onChange({ phoenixdPassword, walletBackend: "phoenixd" })}
+          onTestConnection={testPhoenixdConnection}
+          onLoadWebhookUrl={getPhoenixdWebhookUrl}
+        />
       )}
     </div>
   );

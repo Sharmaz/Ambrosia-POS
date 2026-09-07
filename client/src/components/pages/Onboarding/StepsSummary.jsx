@@ -41,6 +41,14 @@ export function WizardSummary({ data, onEdit }) {
                   {data.nwcUri.length > 60 ? `${data.nwcUri.slice(0, 60)}…` : data.nwcUri}
                 </p>
               )}
+              {data.walletBackend === "phoenixd" && data.phoenixdRemote && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {summaryTranslations("step4.sections.walletBackend.phoenixdRemote")}
+                  {data.phoenixdUrl && (
+                    <span className="font-mono break-all"> — {data.phoenixdUrl}</span>
+                  )}
+                </p>
+              )}
             </div>
             <EditButton onPress={() => onEdit(2)}>{summaryTranslations("buttons.edit")}</EditButton>
           </CardHeader>

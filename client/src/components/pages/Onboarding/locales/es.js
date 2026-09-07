@@ -7,6 +7,10 @@ const onboardingEs = {
     nwcSavedDescription: "El backend NWC está listo para usarse.",
     nwcErrorTitle: "No se pudo conectar la wallet NWC",
     nwcErrorDescription: "Revisá la URI de conexión — vas a tener que rehacer la configuración inicial para volver a intentarlo.",
+    phoenixdRemoteSavedTitle: "Nodo phoenixd remoto activado",
+    phoenixdRemoteSavedDescription: "El backend está conectado al nodo remoto y listo para usarse.",
+    phoenixdRemoteErrorTitle: "No se pudo conectar al nodo phoenixd remoto",
+    phoenixdRemoteErrorDescription: "Revisa la URL y el password — vas a tener que rehacer la configuración inicial para volver a intentarlo.",
   },
   buttons: {
     next: "Siguiente",
@@ -124,6 +128,7 @@ const onboardingEs = {
         title: "Backend Lightning",
         phoenixd: "phoenixd (self-hosted)",
         nwc: "Nostr Wallet Connect",
+        phoenixdRemote: "Nodo remoto",
       },
       adminAccount: {
         title: "Cuenta de administrador",
