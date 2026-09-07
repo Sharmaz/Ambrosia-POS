@@ -7,7 +7,7 @@ import { Zap, Server } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { NWC_URI_REGEX } from "@/lib/nwcUri";
-import { getPhoenixdWebhookUrl, testPhoenixdConnection } from "@/services/initialSetupService";
+import { testPhoenixdConnection } from "@/services/initialSetupService";
 import { PhoenixdRemoteFields } from "@components/shared/PhoenixdRemoteFields";
 
 export function WalletBackendStep({ data, onChange }) {
@@ -98,7 +98,6 @@ export function WalletBackendStep({ data, onChange }) {
           onPhoenixdUrlChange={(phoenixdUrl) => onChange({ phoenixdUrl, walletBackend: "phoenixd" })}
           onPhoenixdPasswordChange={(phoenixdPassword) => onChange({ phoenixdPassword, walletBackend: "phoenixd" })}
           onTestConnection={testPhoenixdConnection}
-          onLoadWebhookUrl={getPhoenixdWebhookUrl}
         />
       )}
     </div>

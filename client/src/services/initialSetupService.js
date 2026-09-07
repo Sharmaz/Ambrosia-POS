@@ -61,18 +61,6 @@ export async function confirmPendingRestore() {
   await httpClient("/initial-setup/confirm-pending-restore", { method: "POST", skipRefresh: true });
 }
 
-export async function getPhoenixdWebhookUrl() {
-  const webhookUrlResponse = await httpClient("/initial-setup/phoenixd-webhook-url", {
-    method: "GET",
-    skipRefresh: true,
-  });
-  const webhookUrlBody = await parseJsonResponse(webhookUrlResponse, null);
-  if (!webhookUrlResponse.ok) {
-    throw new Error(webhookUrlBody?.message ?? "Could not load the phoenixd webhook URL");
-  }
-  return webhookUrlBody;
-}
-
 export async function testPhoenixdConnection(phoenixdUrl, phoenixdPassword) {
   const testConnectionResponse = await httpClient("/initial-setup/test-phoenixd-connection", {
     method: "POST",

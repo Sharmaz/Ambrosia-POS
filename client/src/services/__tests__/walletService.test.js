@@ -23,7 +23,6 @@ import {
   updateNwcUri,
   testPhoenixdConnection,
   updatePhoenixdRemote,
-  getPhoenixdWebhookUrl,
   getPhoenixdRemoteStatus,
   closeChannel,
 } from "../walletService";
@@ -494,26 +493,6 @@ describe("walletService", () => {
         message: "Missing url or password",
         status: 400,
       });
-    });
-  });
-
-  describe("getPhoenixdWebhookUrl", () => {
-    it("calls GET /wallet/phoenixd-webhook-url", async () => {
-      httpClient.mockResolvedValue(makeResponse(200));
-      parseJsonResponse.mockResolvedValue({ webhookUrl: "http://127.0.0.1:9154/webhook/phoenixd" });
-
-      await getPhoenixdWebhookUrl();
-
-      expect(httpClient).toHaveBeenCalledWith("/wallet/phoenixd-webhook-url");
-    });
-
-    it("returns the parsed webhook url", async () => {
-      httpClient.mockResolvedValue(makeResponse(200));
-      parseJsonResponse.mockResolvedValue({ webhookUrl: "http://127.0.0.1:9154/webhook/phoenixd" });
-
-      const webhookUrlResponse = await getPhoenixdWebhookUrl();
-
-      expect(webhookUrlResponse).toEqual({ webhookUrl: "http://127.0.0.1:9154/webhook/phoenixd" });
     });
   });
 

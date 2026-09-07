@@ -28,7 +28,6 @@ function renderFields(props = {}) {
       onPhoenixdUrlChange={jest.fn()}
       onPhoenixdPasswordChange={jest.fn()}
       onTestConnection={jest.fn()}
-      onLoadWebhookUrl={jest.fn()}
       {...props}
     />,
   );
@@ -162,36 +161,6 @@ describe("PhoenixdRemoteFields", () => {
       });
 
       expect(addToast).toHaveBeenCalledWith(expect.objectContaining({ color: "danger", description: "testError" }));
-    });
-  });
-
-  describe("Webhook line", () => {
-    it("shows a button to load the webhook line instead of the line itself", () => {
-      renderFields({ phoenixdRemote: true });
-      expect(screen.getByText("showWebhookButton")).toBeInTheDocument();
-    });
-
-    it("shows the webhook line once loaded", async () => {
-      const onLoadWebhookUrl = jest.fn().mockResolvedValue({ webhookUrl: "http://127.0.0.1:9154/webhook/phoenixd" });
-      renderFields({ phoenixdRemote: true, onLoadWebhookUrl });
-
-      await act(async () => {
-        fireEvent.click(screen.getByText("showWebhookButton"));
-      });
-
-      expect(screen.getByText("http://127.0.0.1:9154/webhook/phoenixd")).toBeInTheDocument();
-    });
-
-    it("shows an error toast when loading the webhook line fails", async () => {
-      const onLoadWebhookUrl = jest.fn().mockRejectedValue(new Error("network error"));
-      const { addToast } = require("@heroui/react");
-      renderFields({ phoenixdRemote: true, onLoadWebhookUrl });
-
-      await act(async () => {
-        fireEvent.click(screen.getByText("showWebhookButton"));
-      });
-
-      expect(addToast).toHaveBeenCalledWith(expect.objectContaining({ color: "danger", description: "webhookLoadError" }));
     });
   });
 });

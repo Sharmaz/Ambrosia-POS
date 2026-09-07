@@ -132,9 +132,6 @@ const componentsEs = {
     testButton: "Probar conexión",
     testSuccess: "Conexión exitosa con el nodo remoto",
     testError: "No se pudo conectar con el nodo remoto — revisa la URL y el password",
-    webhookDescription: "Pega esta línea en el phoenix.conf del nodo remoto para recibir notificaciones de pagos:",
-    showWebhookButton: "Mostrar línea de webhook",
-    webhookLoadError: "No se pudo obtener la línea de webhook",
   },
 };
 

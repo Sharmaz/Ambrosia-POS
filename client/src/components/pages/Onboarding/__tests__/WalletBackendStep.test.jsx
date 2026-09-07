@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 
-import { getPhoenixdWebhookUrl, testPhoenixdConnection } from "@/services/initialSetupService";
+import { testPhoenixdConnection } from "@/services/initialSetupService";
 
 import { WalletBackendStep } from "../WalletBackendStep";
 
@@ -78,11 +78,10 @@ describe("WalletBackendStep", () => {
       expect(screen.getByTestId("phoenixd-password-value").textContent).toBe("remote-password");
     });
 
-    it("passes the initialSetupService test-connection and webhook-url functions through", () => {
+    it("passes the initialSetupService test-connection function through", () => {
       renderStep({ walletBackend: "phoenixd" });
 
       expect(mockPhoenixdRemoteFieldsProps.onTestConnection).toBe(testPhoenixdConnection);
-      expect(mockPhoenixdRemoteFieldsProps.onLoadWebhookUrl).toBe(getPhoenixdWebhookUrl);
     });
 
     it("forwards onPhoenixdRemoteChange as phoenixdRemote, keeping walletBackend as phoenixd", () => {

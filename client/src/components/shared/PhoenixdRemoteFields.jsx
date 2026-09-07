@@ -13,12 +13,9 @@ export function PhoenixdRemoteFields({
   onPhoenixdUrlChange,
   onPhoenixdPasswordChange,
   onTestConnection,
-  onLoadWebhookUrl,
 }) {
   const phoenixdRemoteTranslations = useTranslations("phoenixdRemote");
   const [testingConnection, setTestingConnection] = useState(false);
-  const [webhookUrl, setWebhookUrl] = useState("");
-  const [loadingWebhookUrl, setLoadingWebhookUrl] = useState(false);
 
   const handleTestConnection = async () => {
     setTestingConnection(true);
@@ -32,18 +29,6 @@ export function PhoenixdRemoteFields({
       });
     } finally {
       setTestingConnection(false);
-    }
-  };
-
-  const handleLoadWebhookUrl = async () => {
-    setLoadingWebhookUrl(true);
-    try {
-      const webhookUrlResponse = await onLoadWebhookUrl();
-      setWebhookUrl(webhookUrlResponse?.webhookUrl || "");
-    } catch {
-      addToast({ color: "danger", description: phoenixdRemoteTranslations("webhookLoadError") });
-    } finally {
-      setLoadingWebhookUrl(false);
     }
   };
 
@@ -86,22 +71,6 @@ export function PhoenixdRemoteFields({
           >
             {phoenixdRemoteTranslations("testButton")}
           </Button>
-
-          <div className="text-xs text-gray-500 space-y-1">
-            <p>{phoenixdRemoteTranslations("webhookDescription")}</p>
-            {webhookUrl ? (
-              <code className="block break-all bg-gray-100 rounded p-2">{webhookUrl}</code>
-            ) : (
-              <button
-                type="button"
-                onClick={handleLoadWebhookUrl}
-                disabled={loadingWebhookUrl}
-                className="text-green-800 underline"
-              >
-                {phoenixdRemoteTranslations("showWebhookButton")}
-              </button>
-            )}
-          </div>
         </div>
       )}
     </div>

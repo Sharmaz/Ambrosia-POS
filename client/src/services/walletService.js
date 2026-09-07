@@ -264,15 +264,6 @@ export async function updatePhoenixdRemote({ phoenixdRemote, phoenixdUrl, phoeni
   );
 }
 
-export async function getPhoenixdWebhookUrl() {
-  const webhookUrlResponse = await httpClient("/wallet/phoenixd-webhook-url");
-  return await parseWalletResponseOrThrow(
-    webhookUrlResponse,
-    null,
-    "Could not load the phoenixd webhook URL",
-  );
-}
-
 export async function getPhoenixdRemoteStatus() {
   const phoenixdRemoteStatusResponse = await httpClient("/wallet/phoenixd-remote-status");
   return await parseWalletResponseOrThrow(

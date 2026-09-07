@@ -132,9 +132,6 @@ const componentsEn = {
     testButton: "Test connection",
     testSuccess: "Successfully connected to the remote node",
     testError: "Could not connect to the remote node — check the URL and password",
-    webhookDescription: "Paste this line into the remote node's phoenix.conf to receive payment notifications:",
-    showWebhookButton: "Show webhook line",
-    webhookLoadError: "Could not load the webhook line",
   },
 };
 

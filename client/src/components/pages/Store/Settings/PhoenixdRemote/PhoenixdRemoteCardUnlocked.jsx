@@ -7,7 +7,6 @@ import { addToast, Button, Card, CardBody, CardHeader } from "@heroui/react";
 import { RequirePermission } from "@/hooks/usePermission";
 import {
   getPhoenixdRemoteStatus,
-  getPhoenixdWebhookUrl,
   testPhoenixdConnection,
   updatePhoenixdRemote,
 } from "@/services/walletService";
@@ -94,7 +93,6 @@ export function PhoenixdRemoteCardUnlocked({ onHide, phoenixdRemoteCardTranslati
                 onPhoenixdUrlChange={setPhoenixdUrl}
                 onPhoenixdPasswordChange={setPhoenixdPassword}
                 onTestConnection={testPhoenixdConnection}
-                onLoadWebhookUrl={getPhoenixdWebhookUrl}
               />
             </RequirePermission>
 

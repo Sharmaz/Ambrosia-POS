@@ -15,7 +15,6 @@ import { closeBackupProgressChannel, openBackupProgressChannel } from "../backup
 import {
   confirmPendingRestore,
   getInitialSetupStatus,
-  getPhoenixdWebhookUrl,
   submitInitialSetup,
   restoreFromBackup,
   testPhoenixdConnection,
@@ -247,29 +246,6 @@ describe("initialSetupService", () => {
       await expect(testPhoenixdConnection("http://100.1.1.1:9740", "wrong-password")).rejects.toThrow(
         "Lightning node is unavailable",
       );
-    });
-  });
-
-  describe("getPhoenixdWebhookUrl", () => {
-    it("calls GET /initial-setup/phoenixd-webhook-url with skipRefresh", async () => {
-      httpClient.mockResolvedValue({ ok: true });
-      parseJsonResponse.mockResolvedValue({ webhookUrl: "http://127.0.0.1:9154/webhook/phoenixd" });
-
-      await getPhoenixdWebhookUrl();
-
-      expect(httpClient).toHaveBeenCalledWith("/initial-setup/phoenixd-webhook-url", {
-        method: "GET",
-        skipRefresh: true,
-      });
-    });
-
-    it("returns the parsed webhook url", async () => {
-      httpClient.mockResolvedValue({ ok: true });
-      parseJsonResponse.mockResolvedValue({ webhookUrl: "http://127.0.0.1:9154/webhook/phoenixd" });
-
-      const webhookUrlResponse = await getPhoenixdWebhookUrl();
-
-      expect(webhookUrlResponse).toEqual({ webhookUrl: "http://127.0.0.1:9154/webhook/phoenixd" });
     });
   });
 });
