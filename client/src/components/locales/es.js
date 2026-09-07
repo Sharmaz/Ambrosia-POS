@@ -121,6 +121,8 @@ const componentsEs = {
     title: "Reinicio requerido",
     description: "Por favor reinicia el servidor de Ambrosia para terminar de cargar tus datos.",
     acknowledgeButton: "Entendido",
+    countdownDescription: "La aplicación se reiniciará automáticamente en:",
+    restartNowButton: "Reiniciar ahora",
   },
   phoenixdRemote: {
     remoteToggleLabel: "Nodo phoenixd remoto",

@@ -15,6 +15,11 @@ import { restartAppAfterPhoenixdRemoteChange } from "@/utils/restartAppAfterPhoe
 import WalletGuard from "@components/auth/WalletGuard";
 import { PhoenixdRemoteFields } from "@components/shared/PhoenixdRemoteFields";
 import { RestartRequiredModal } from "@components/shared/RestartRequiredModal";
+import { isElectron } from "@lib/isElectron";
+
+import { PhoenixdRemoteActivatedModal } from "./PhoenixdRemoteActivatedModal";
+
+const RESTART_COUNTDOWN_SECONDS = 5;
 
 export function PhoenixdRemoteCardUnlocked({ onHide, phoenixdRemoteCardTranslations }) {
   const [phoenixdRemote, setPhoenixdRemote] = useState(undefined);
@@ -22,6 +27,7 @@ export function PhoenixdRemoteCardUnlocked({ onHide, phoenixdRemoteCardTranslati
   const [phoenixdPassword, setPhoenixdPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showRestartModal, setShowRestartModal] = useState(false);
+  const [showRemoteActivatedModal, setShowRemoteActivatedModal] = useState(false);
 
   const handleAuthorized = async () => {
     try {
@@ -41,19 +47,11 @@ export function PhoenixdRemoteCardUnlocked({ onHide, phoenixdRemoteCardTranslati
         phoenixdPassword: phoenixdRemote ? phoenixdPassword : undefined,
       });
       if (phoenixdRemote) {
-        addToast({ color: "success", description: phoenixdRemoteCardTranslations("phoenixdRemoteCard.success") });
+        setShowRemoteActivatedModal(true);
         setPhoenixdUrl("");
         setPhoenixdPassword("");
       } else {
-        const restartTriggeredAutomatically = await restartAppAfterPhoenixdRemoteChange();
-        if (restartTriggeredAutomatically) {
-          addToast({
-            description: phoenixdRemoteCardTranslations("phoenixdRemoteCard.restartingElectron"),
-            color: "primary",
-          });
-        } else {
-          setShowRestartModal(true);
-        }
+        setShowRestartModal(true);
       }
     } catch (updatePhoenixdRemoteError) {
       addToast({
@@ -124,7 +122,16 @@ export function PhoenixdRemoteCardUnlocked({ onHide, phoenixdRemoteCardTranslati
           </div>
         </CardBody>
       </Card>
-      <RestartRequiredModal isOpen={showRestartModal} onAcknowledge={() => setShowRestartModal(false)} />
+      <RestartRequiredModal
+        isOpen={showRestartModal}
+        onAcknowledge={isElectron ? restartAppAfterPhoenixdRemoteChange : () => setShowRestartModal(false)}
+        countdownSeconds={isElectron ? RESTART_COUNTDOWN_SECONDS : undefined}
+      />
+      <PhoenixdRemoteActivatedModal
+        isOpen={showRemoteActivatedModal}
+        onAcknowledge={() => setShowRemoteActivatedModal(false)}
+        phoenixdRemoteCardTranslations={phoenixdRemoteCardTranslations}
+      />
     </WalletGuard>
   );
 }

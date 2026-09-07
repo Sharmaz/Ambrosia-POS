@@ -37,6 +37,10 @@ jest.mock("@components/shared/RestartRequiredModal", () => ({
   RestartRequiredModal: () => null,
 }));
 
+jest.mock("../PhoenixdRemoteActivatedModal", () => ({
+  PhoenixdRemoteActivatedModal: () => null,
+}));
+
 describe("PhoenixdRemoteCard", () => {
   describe("Initial (locked) state", () => {
     it("renders the locked card by default", () => {

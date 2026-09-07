@@ -11,6 +11,13 @@ jest.mock("@/services/walletService");
 
 jest.mock("@/utils/restartAppAfterPhoenixdRemoteChange");
 
+let mockIsElectron = false;
+jest.mock("@lib/isElectron", () => ({
+  get isElectron() {
+    return mockIsElectron;
+  },
+}));
+
 jest.mock("@heroui/react", () => ({
   addToast: jest.fn(),
   Button: ({ onPress, children, isDisabled, ...props }) => (
@@ -48,10 +55,23 @@ jest.mock("@components/shared/PhoenixdRemoteFields", () => ({
 }));
 
 jest.mock("@components/shared/RestartRequiredModal", () => ({
-  RestartRequiredModal: ({ isOpen, onAcknowledge }) => (
+  RestartRequiredModal: ({ isOpen, onAcknowledge, countdownSeconds }) => (
     isOpen ? (
       <div data-testid="restart-modal">
+        <span data-testid="restart-modal-countdown">{String(countdownSeconds)}</span>
         <button type="button" data-testid="restart-modal-acknowledge" onClick={onAcknowledge}>acknowledge</button>
+      </div>
+    ) : null
+  ),
+}));
+
+jest.mock("../PhoenixdRemoteActivatedModal", () => ({
+  PhoenixdRemoteActivatedModal: ({ isOpen, onAcknowledge, phoenixdRemoteCardTranslations }) => (
+    isOpen ? (
+      <div data-testid="remote-activated-modal">
+        <span>{phoenixdRemoteCardTranslations("phoenixdRemoteCard.remoteActivatedTitle")}</span>
+        <span>{phoenixdRemoteCardTranslations("phoenixdRemoteCard.remoteActivatedDescription")}</span>
+        <button type="button" data-testid="remote-activated-modal-acknowledge" onClick={onAcknowledge}>acknowledge</button>
       </div>
     ) : null
   ),
@@ -65,6 +85,7 @@ function renderUnlocked(props = {}) {
 
 describe("PhoenixdRemoteCardUnlocked", () => {
   afterEach(() => {
+    mockIsElectron = false;
     jest.clearAllMocks();
   });
 
@@ -163,9 +184,8 @@ describe("PhoenixdRemoteCardUnlocked", () => {
       expect(screen.getByText("phoenixdRemoteCard.submitButton")).not.toBeDisabled();
     });
 
-    it("submits remote=true with url and password, shows a success toast, and clears the fields", async () => {
+    it("submits remote=true with url and password, shows the remote-activated modal, and clears the fields", async () => {
       walletService.updatePhoenixdRemote.mockResolvedValue({ message: "Remote phoenixd node configured" });
-      const { addToast } = require("@heroui/react");
       renderUnlocked();
 
       fireEvent.click(screen.getByText("set-remote-true"));
@@ -180,15 +200,28 @@ describe("PhoenixdRemoteCardUnlocked", () => {
         phoenixdUrl: "http://100.1.1.1:9740",
         phoenixdPassword: "remote-password",
       });
-      expect(addToast).toHaveBeenCalledWith(
-        expect.objectContaining({ color: "success", description: "phoenixdRemoteCard.success" }),
-      );
+      expect(screen.getByText("phoenixdRemoteCard.remoteActivatedTitle")).toBeInTheDocument();
+      expect(screen.getByText("phoenixdRemoteCard.remoteActivatedDescription")).toBeInTheDocument();
     });
 
-    it("submits remote=false, triggers an automatic Electron restart, and shows the restarting toast", async () => {
+    it("closes the remote-activated modal when acknowledged", async () => {
+      walletService.updatePhoenixdRemote.mockResolvedValue({ message: "Remote phoenixd node configured" });
+      renderUnlocked();
+
+      fireEvent.click(screen.getByText("set-remote-true"));
+      fireEvent.click(screen.getByText("set-url"));
+      fireEvent.click(screen.getByText("set-password"));
+      await act(async () => {
+        fireEvent.click(screen.getByText("phoenixdRemoteCard.submitButton"));
+      });
+      fireEvent.click(screen.getByTestId("remote-activated-modal-acknowledge"));
+
+      expect(screen.queryByText("phoenixdRemoteCard.remoteActivatedTitle")).not.toBeInTheDocument();
+    });
+
+    it("submits remote=false and shows the restart modal with a countdown inside Electron", async () => {
       walletService.updatePhoenixdRemote.mockResolvedValue({ message: "Switched to local phoenixd — restart required to apply" });
-      restartAppAfterPhoenixdRemoteChange.mockResolvedValue(true);
-      const { addToast } = require("@heroui/react");
+      mockIsElectron = true;
       renderUnlocked();
 
       fireEvent.click(screen.getByText("set-remote-false"));
@@ -201,15 +234,26 @@ describe("PhoenixdRemoteCardUnlocked", () => {
         phoenixdUrl: undefined,
         phoenixdPassword: undefined,
       });
-      expect(addToast).toHaveBeenCalledWith(
-        expect.objectContaining({ color: "primary", description: "phoenixdRemoteCard.restartingElectron" }),
-      );
-      expect(screen.queryByTestId("restart-modal")).not.toBeInTheDocument();
+      expect(screen.getByTestId("restart-modal")).toBeInTheDocument();
+      expect(screen.getByTestId("restart-modal-countdown").textContent).toBe("5");
     });
 
-    it("submits remote=false and shows the restart modal when not running in Electron", async () => {
+    it("triggers the Electron relaunch when the restart modal is acknowledged", async () => {
       walletService.updatePhoenixdRemote.mockResolvedValue({ message: "Switched to local phoenixd — restart required to apply" });
-      restartAppAfterPhoenixdRemoteChange.mockResolvedValue(false);
+      mockIsElectron = true;
+      renderUnlocked();
+
+      fireEvent.click(screen.getByText("set-remote-false"));
+      await act(async () => {
+        fireEvent.click(screen.getByText("phoenixdRemoteCard.submitButton"));
+      });
+      fireEvent.click(screen.getByTestId("restart-modal-acknowledge"));
+
+      expect(restartAppAfterPhoenixdRemoteChange).toHaveBeenCalledTimes(1);
+    });
+
+    it("submits remote=false and shows the restart modal without a countdown when not running in Electron", async () => {
+      walletService.updatePhoenixdRemote.mockResolvedValue({ message: "Switched to local phoenixd — restart required to apply" });
       renderUnlocked();
 
       fireEvent.click(screen.getByText("set-remote-false"));
@@ -218,6 +262,21 @@ describe("PhoenixdRemoteCardUnlocked", () => {
       });
 
       expect(screen.getByTestId("restart-modal")).toBeInTheDocument();
+      expect(screen.getByTestId("restart-modal-countdown").textContent).toBe("undefined");
+    });
+
+    it("closes the restart modal when acknowledged outside Electron, without triggering a relaunch", async () => {
+      walletService.updatePhoenixdRemote.mockResolvedValue({ message: "Switched to local phoenixd — restart required to apply" });
+      renderUnlocked();
+
+      fireEvent.click(screen.getByText("set-remote-false"));
+      await act(async () => {
+        fireEvent.click(screen.getByText("phoenixdRemoteCard.submitButton"));
+      });
+      fireEvent.click(screen.getByTestId("restart-modal-acknowledge"));
+
+      expect(restartAppAfterPhoenixdRemoteChange).not.toHaveBeenCalled();
+      expect(screen.queryByTestId("restart-modal")).not.toBeInTheDocument();
     });
 
     it("shows an error toast when saving fails", async () => {

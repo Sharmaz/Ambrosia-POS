@@ -121,6 +121,8 @@ const componentsEn = {
     title: "Restart required",
     description: "Please restart the Ambrosia server to finish loading your data.",
     acknowledgeButton: "Got it",
+    countdownDescription: "The application will restart automatically in:",
+    restartNowButton: "Restart now",
   },
   phoenixdRemote: {
     remoteToggleLabel: "Remote phoenixd node",
