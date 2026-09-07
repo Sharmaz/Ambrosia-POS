@@ -19,6 +19,7 @@ class ServiceManager extends EventEmitter {
     this.nextjsService = new NextJsService();
     this.ports = null;
     this.configs = null;
+    this.phoenixdRemoteConfigured = false;
     // Track which services are external (not managed by us)
     this.externalServices = {
       phoenixd: false,
@@ -67,9 +68,9 @@ class ServiceManager extends EventEmitter {
       logger.log('[ServiceManager] Production mode: starting all bundled services');
 
       const nwcUriConfigured = Boolean(this.configs.ambrosia['nwc-uri']);
-      const phoenixdRemoteConfigured = this.configs.ambrosia['phoenixd-remote'] === 'true';
+      this.phoenixdRemoteConfigured = this.configs.ambrosia['phoenixd-remote'] === 'true';
 
-      if (nwcUriConfigured || phoenixdRemoteConfigured) {
+      if (nwcUriConfigured || this.phoenixdRemoteConfigured) {
         const skipReason = nwcUriConfigured ? 'NWC is the configured backend' : 'a remote phoenixd node is configured';
         logger.log(`[ServiceManager] Step 1: ${skipReason}, skipping Phoenixd startup`);
         this.externalServices.phoenixd = true;
@@ -102,6 +103,7 @@ class ServiceManager extends EventEmitter {
           phoenixdPort: this.ports.phoenixd,
           phoenixPassword: phoenixConfig['http-password'],
           webhookSecret: phoenixConfig['webhook-secret'],
+          phoenixdRemoteConfigured: this.phoenixdRemoteConfigured,
         });
       }
       this.emit('service:started', { service: 'backend', port: this.ports.backend });
@@ -226,6 +228,7 @@ class ServiceManager extends EventEmitter {
             phoenixdPort: this.ports.phoenixd,
             phoenixPassword: this.configs.phoenix['http-password'],
             webhookSecret: this.configs.phoenix['webhook-secret'],
+            phoenixdRemoteConfigured: this.phoenixdRemoteConfigured,
           });
           break;
         case 'nextjs':
