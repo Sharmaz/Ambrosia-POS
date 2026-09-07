@@ -12,7 +12,14 @@ import { httpClient, parseJsonResponse } from "@/lib/http";
 import { waitForInstance } from "@test-utils/waitForInstance";
 
 import { closeBackupProgressChannel, openBackupProgressChannel } from "../backupProgressChannel";
-import { confirmPendingRestore, getInitialSetupStatus, submitInitialSetup, restoreFromBackup } from "../initialSetupService";
+import {
+  confirmPendingRestore,
+  getInitialSetupStatus,
+  getPhoenixdWebhookUrl,
+  submitInitialSetup,
+  restoreFromBackup,
+  testPhoenixdConnection,
+} from "../initialSetupService";
 
 class FakeXMLHttpRequest {
   constructor() {
@@ -206,6 +213,63 @@ describe("initialSetupService", () => {
         method: "POST",
         skipRefresh: true,
       });
+    });
+  });
+
+  describe("testPhoenixdConnection", () => {
+    it("calls POST /initial-setup/test-phoenixd-connection with url and password", async () => {
+      httpClient.mockResolvedValue({ ok: true });
+      parseJsonResponse.mockResolvedValue({ nodeId: "node-1" });
+
+      await testPhoenixdConnection("http://100.1.1.1:9740", "remote-password");
+
+      expect(httpClient).toHaveBeenCalledWith("/initial-setup/test-phoenixd-connection", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phoenixdUrl: "http://100.1.1.1:9740", phoenixdPassword: "remote-password" }),
+        skipRefresh: true,
+      });
+    });
+
+    it("returns the parsed node info on success", async () => {
+      httpClient.mockResolvedValue({ ok: true });
+      parseJsonResponse.mockResolvedValue({ nodeId: "node-1" });
+
+      const testConnectionResponse = await testPhoenixdConnection("http://100.1.1.1:9740", "remote-password");
+
+      expect(testConnectionResponse).toEqual({ nodeId: "node-1" });
+    });
+
+    it("throws with the server message when the response is not ok", async () => {
+      httpClient.mockResolvedValue({ ok: false });
+      parseJsonResponse.mockResolvedValue({ message: "Lightning node is unavailable" });
+
+      await expect(testPhoenixdConnection("http://100.1.1.1:9740", "wrong-password")).rejects.toThrow(
+        "Lightning node is unavailable",
+      );
+    });
+  });
+
+  describe("getPhoenixdWebhookUrl", () => {
+    it("calls GET /initial-setup/phoenixd-webhook-url with skipRefresh", async () => {
+      httpClient.mockResolvedValue({ ok: true });
+      parseJsonResponse.mockResolvedValue({ webhookUrl: "http://127.0.0.1:9154/webhook/phoenixd" });
+
+      await getPhoenixdWebhookUrl();
+
+      expect(httpClient).toHaveBeenCalledWith("/initial-setup/phoenixd-webhook-url", {
+        method: "GET",
+        skipRefresh: true,
+      });
+    });
+
+    it("returns the parsed webhook url", async () => {
+      httpClient.mockResolvedValue({ ok: true });
+      parseJsonResponse.mockResolvedValue({ webhookUrl: "http://127.0.0.1:9154/webhook/phoenixd" });
+
+      const webhookUrlResponse = await getPhoenixdWebhookUrl();
+
+      expect(webhookUrlResponse).toEqual({ webhookUrl: "http://127.0.0.1:9154/webhook/phoenixd" });
     });
   });
 });
