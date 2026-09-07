@@ -53,6 +53,17 @@ class ActiveLightningBackendTest {
     }
 
     @Test
+    fun `reinitializePhoenixBackend replaces the active backend and closes the previous one`() {
+        val previousBackend = FakeLightningBackend("phoenixd-old")
+        ActiveLightningBackend.set(previousBackend)
+
+        ActiveLightningBackend.reinitializePhoenixBackend("http://127.0.0.1:1", "irrelevant-password")
+
+        assertTrue(previousBackend.closed)
+        assertFalse(ActiveLightningBackend.isNwcActive())
+    }
+
+    @Test
     fun `isNwcActive returns false when the active backend is not NwcService`() {
         ActiveLightningBackend.set(FakeLightningBackend("phoenixd"))
 
