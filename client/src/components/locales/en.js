@@ -122,6 +122,18 @@ const componentsEn = {
     description: "Please restart the Ambrosia server to finish loading your data.",
     acknowledgeButton: "Got it",
   },
+  phoenixdRemote: {
+    remoteToggleLabel: "Remote phoenixd node",
+    remoteToggleDescription: "Connect to a phoenixd that is already running elsewhere (e.g. via Tailscale) instead of managing a local one.",
+    urlLabel: "Remote node URL",
+    passwordLabel: "Remote node http-password",
+    testButton: "Test connection",
+    testSuccess: "Successfully connected to the remote node",
+    testError: "Could not connect to the remote node — check the URL and password",
+    webhookDescription: "Paste this line into the remote node's phoenix.conf to receive payment notifications:",
+    showWebhookButton: "Show webhook line",
+    webhookLoadError: "Could not load the webhook line",
+  },
 };
 
 export default componentsEn;

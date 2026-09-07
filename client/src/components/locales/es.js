@@ -122,6 +122,18 @@ const componentsEs = {
     description: "Por favor reinicia el servidor de Ambrosia para terminar de cargar tus datos.",
     acknowledgeButton: "Entendido",
   },
+  phoenixdRemote: {
+    remoteToggleLabel: "Nodo phoenixd remoto",
+    remoteToggleDescription: "Conéctate a un phoenixd que ya está corriendo en otro lugar (por ejemplo, vía Tailscale) en vez de administrar uno local.",
+    urlLabel: "URL del nodo remoto",
+    passwordLabel: "http-password del nodo remoto",
+    testButton: "Probar conexión",
+    testSuccess: "Conexión exitosa con el nodo remoto",
+    testError: "No se pudo conectar con el nodo remoto — revisa la URL y el password",
+    webhookDescription: "Pega esta línea en el phoenix.conf del nodo remoto para recibir notificaciones de pagos:",
+    showWebhookButton: "Mostrar línea de webhook",
+    webhookLoadError: "No se pudo obtener la línea de webhook",
+  },
 };
 
 export default componentsEs;
