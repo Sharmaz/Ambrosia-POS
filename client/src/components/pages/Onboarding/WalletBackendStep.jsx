@@ -10,19 +10,19 @@ import { NWC_URI_REGEX } from "@/lib/nwcUri";
 import { testPhoenixdConnection } from "@/services/initialSetupService";
 import { PhoenixdRemoteFields } from "@components/shared/PhoenixdRemoteFields";
 
-export function WalletBackendStep({ data, onChange }) {
+export function WalletBackendStep({ walletBackendData, onChange }) {
   const walletBackendTranslations = useTranslations();
   const [uriError, setUriError] = useState("");
 
-  const isNwc = !!data.nwcUri || data.walletBackend === "nwc";
+  const isNwc = !!walletBackendData.nwcUri || walletBackendData.walletBackend === "nwc";
 
   const handleSelect = (backend) => {
     onChange({
       walletBackend: backend,
-      nwcUri: backend === "phoenixd" ? "" : data.nwcUri,
-      phoenixdRemote: backend === "nwc" ? false : data.phoenixdRemote,
-      phoenixdUrl: backend === "nwc" ? "" : data.phoenixdUrl,
-      phoenixdPassword: backend === "nwc" ? "" : data.phoenixdPassword,
+      nwcUri: backend === "phoenixd" ? "" : walletBackendData.nwcUri,
+      phoenixdRemote: backend === "nwc" ? false : walletBackendData.phoenixdRemote,
+      phoenixdUrl: backend === "nwc" ? "" : walletBackendData.phoenixdUrl,
+      phoenixdPassword: backend === "nwc" ? "" : walletBackendData.phoenixdPassword,
     });
   };
 
@@ -78,7 +78,7 @@ export function WalletBackendStep({ data, onChange }) {
           <Input
             label={walletBackendTranslations("stepWallet.uriLabel")}
             placeholder="nostr+walletconnect://..."
-            value={data.nwcUri || ""}
+            value={walletBackendData.nwcUri || ""}
             onValueChange={handleUriChange}
             isInvalid={!!uriError}
             errorMessage={uriError}
@@ -91,9 +91,9 @@ export function WalletBackendStep({ data, onChange }) {
 
       {!isNwc && (
         <PhoenixdRemoteFields
-          phoenixdRemote={Boolean(data.phoenixdRemote)}
-          phoenixdUrl={data.phoenixdUrl || ""}
-          phoenixdPassword={data.phoenixdPassword || ""}
+          phoenixdRemote={Boolean(walletBackendData.phoenixdRemote)}
+          phoenixdUrl={walletBackendData.phoenixdUrl || ""}
+          phoenixdPassword={walletBackendData.phoenixdPassword || ""}
           onPhoenixdRemoteChange={(phoenixdRemote) => onChange({ phoenixdRemote, walletBackend: "phoenixd" })}
           onPhoenixdUrlChange={(phoenixdUrl) => onChange({ phoenixdUrl, walletBackend: "phoenixd" })}
           onPhoenixdPasswordChange={(phoenixdPassword) => onChange({ phoenixdPassword, walletBackend: "phoenixd" })}

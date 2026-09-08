@@ -49,7 +49,7 @@ jest.mock("@components/shared/PhoenixdRemoteFields", () => ({
 
 function renderStep(data = {}, onChange = jest.fn()) {
   const defaultData = { walletBackend: "phoenixd", nwcUri: "" };
-  return { onChange, ...render(<WalletBackendStep data={{ ...defaultData, ...data }} onChange={onChange} />) };
+  return { onChange, ...render(<WalletBackendStep walletBackendData={{ ...defaultData, ...data }} onChange={onChange} />) };
 }
 
 describe("WalletBackendStep", () => {

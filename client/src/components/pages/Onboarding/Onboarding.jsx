@@ -34,7 +34,7 @@ export function Onboarding() {
   const [setupStatus, setSetupStatus] = useState(null);
   const [isSubmittingSetup, setIsSubmittingSetup] = useState(false);
   const isSubmittingSetupRef = useRef(false);
-  const [data, setData] = useState({
+  const [onboardingData, setOnboardingData] = useState({
     businessType: "store",
     walletBackend: "phoenixd",
     nwcUri: "",
@@ -66,7 +66,7 @@ export function Onboarding() {
         if (!isMounted) return;
         setSetupStatus(statusData);
         if (statusData?.needsBusinessType) {
-          setData((prev) => ({ ...prev, businessType: "" }));
+          setOnboardingData((prev) => ({ ...prev, businessType: "" }));
         }
       } catch {
         if (!isMounted) return;
@@ -103,7 +103,7 @@ export function Onboarding() {
   };
 
   const handleDataChange = (newData) => {
-    setData((prev) => ({ ...prev, ...newData }));
+    setOnboardingData((prev) => ({ ...prev, ...newData }));
   };
 
   const handleComplete = async () => {
@@ -114,7 +114,7 @@ export function Onboarding() {
     try {
       if (needsBusinessType) {
         await submitInitialSetup({
-          businessType: data.businessType,
+          businessType: onboardingData.businessType,
         });
         addRedirectToast({
           title: onboardingTranslations("submitOnboardingToast.title"),
@@ -126,26 +126,26 @@ export function Onboarding() {
       }
 
       let logoUrl = null;
-      if (data.businessLogo) {
-        const [uploaded] = await upload([data.businessLogo]);
+      if (onboardingData.businessLogo) {
+        const [uploaded] = await upload([onboardingData.businessLogo]);
         logoUrl = uploaded?.url ?? uploaded?.path;
       }
 
-      const isPhoenixdRemoteAttempt = data.walletBackend === "phoenixd" && Boolean(data.phoenixdRemote);
+      const isPhoenixdRemoteAttempt = onboardingData.walletBackend === "phoenixd" && Boolean(onboardingData.phoenixdRemote);
 
       const setupResponse = await submitInitialSetup({
-        ...data,
+        ...onboardingData,
         businessLogoUrl: logoUrl,
         businessLogo: undefined,
         userPasswordConfirmation: undefined,
         walletBackend: undefined,
-        nwcUri: data.walletBackend === "nwc" && data.nwcUri ? data.nwcUri : undefined,
+        nwcUri: onboardingData.walletBackend === "nwc" && onboardingData.nwcUri ? onboardingData.nwcUri : undefined,
         phoenixdRemote: isPhoenixdRemoteAttempt ? true : undefined,
-        phoenixdUrl: isPhoenixdRemoteAttempt ? data.phoenixdUrl : undefined,
-        phoenixdPassword: isPhoenixdRemoteAttempt ? data.phoenixdPassword : undefined,
+        phoenixdUrl: isPhoenixdRemoteAttempt ? onboardingData.phoenixdUrl : undefined,
+        phoenixdPassword: isPhoenixdRemoteAttempt ? onboardingData.phoenixdPassword : undefined,
       });
 
-      const isNwcAttempt = data.walletBackend === "nwc";
+      const isNwcAttempt = onboardingData.walletBackend === "nwc";
       let nwcSaved = false;
       let phoenixdRemoteSaved = false;
       try {
@@ -242,7 +242,7 @@ export function Onboarding() {
             <div className="bg-white rounded-lg shadow-lg p-4 md:p-8 mb-8">
               {step === 1 && (
               <BusinessTypeStep
-                value={data.businessType}
+                value={onboardingData.businessType}
                 onChange={(businessType) => handleDataChange({ businessType })}
               />
               )}
@@ -261,11 +261,11 @@ export function Onboarding() {
 
               {step === 2 && (
               <UserAccountStep
-                data={{
-                  userName: data.userName,
-                  userPassword: data.userPassword,
-                  userPasswordConfirmation: data.userPasswordConfirmation,
-                  userPin: data.userPin,
+                userAccountData={{
+                  userName: onboardingData.userName,
+                  userPassword: onboardingData.userPassword,
+                  userPasswordConfirmation: onboardingData.userPasswordConfirmation,
+                  userPin: onboardingData.userPin,
                 }}
                 onChange={(userData) => handleDataChange(userData)}
               />
@@ -273,16 +273,16 @@ export function Onboarding() {
 
               {step === 3 && (
               <BusinessDetailsStep
-                data={{
-                  businessType: data.businessType,
-                  businessName: data.businessName,
-                  businessAddress: data.businessAddress,
-                  businessPhone: data.businessPhone,
-                  businessEmail: data.businessEmail,
-                  businessRFC: data.businessRFC,
-                  businessCurrency: data.businessCurrency,
-                  timezone: data.timezone,
-                  businessLogo: data.businessLogo,
+                businessData={{
+                  businessType: onboardingData.businessType,
+                  businessName: onboardingData.businessName,
+                  businessAddress: onboardingData.businessAddress,
+                  businessPhone: onboardingData.businessPhone,
+                  businessEmail: onboardingData.businessEmail,
+                  businessRFC: onboardingData.businessRFC,
+                  businessCurrency: onboardingData.businessCurrency,
+                  timezone: onboardingData.timezone,
+                  businessLogo: onboardingData.businessLogo,
                 }}
                 onChange={(businessData) => handleDataChange(businessData)}
               />
@@ -290,18 +290,18 @@ export function Onboarding() {
 
               {step === 4 && (
               <WalletBackendStep
-                data={{
-                  walletBackend: data.walletBackend,
-                  nwcUri: data.nwcUri,
-                  phoenixdRemote: data.phoenixdRemote,
-                  phoenixdUrl: data.phoenixdUrl,
-                  phoenixdPassword: data.phoenixdPassword,
+                walletBackendData={{
+                  walletBackend: onboardingData.walletBackend,
+                  nwcUri: onboardingData.nwcUri,
+                  phoenixdRemote: onboardingData.phoenixdRemote,
+                  phoenixdUrl: onboardingData.phoenixdUrl,
+                  phoenixdPassword: onboardingData.phoenixdPassword,
                 }}
                 onChange={(walletData) => handleDataChange(walletData)}
               />
               )}
 
-              {step === 5 && <WizardSummary data={data} onEdit={(stepNum) => setStep(stepNum)} />}
+              {step === 5 && <WizardSummary onboardingData={onboardingData} onEdit={(stepNum) => setStep(stepNum)} />}
 
               <Divider className="hidden md:block my-8 bg-gray-400" />
 
@@ -321,7 +321,7 @@ export function Onboarding() {
                     <Button
                       color="primary"
                       onPress={handleComplete}
-                      isDisabled={!data.businessType || isSubmittingSetup}
+                      isDisabled={!onboardingData.businessType || isSubmittingSetup}
                       isLoading={isSubmittingSetup}
                       className="bg-green-800"
                     >
@@ -332,17 +332,17 @@ export function Onboarding() {
                       color="primary"
                       onPress={handleNext}
                       isDisabled={
-                    (step === 1 && !data.businessType) ||
+                    (step === 1 && !onboardingData.businessType) ||
                     (step === 2 && (
-                      !data.userName ||
-                      !data.userPassword ||
-                      !data.userPasswordConfirmation ||
-                      data.userPassword !== data.userPasswordConfirmation ||
-                      !isPasswordStrong(data.userPassword) ||
-                      !isPinValid(data.userPin)
+                      !onboardingData.userName ||
+                      !onboardingData.userPassword ||
+                      !onboardingData.userPasswordConfirmation ||
+                      onboardingData.userPassword !== onboardingData.userPasswordConfirmation ||
+                      !isPasswordStrong(onboardingData.userPassword) ||
+                      !isPinValid(onboardingData.userPin)
                     )) ||
-                    (step === 3 && (!data.businessName || !data.businessCurrency || !data.timezone)) ||
-                    (step === 4 && data.walletBackend === "nwc" && (!data.nwcUri || !NWC_URI_REGEX.test(data.nwcUri)))
+                    (step === 3 && (!onboardingData.businessName || !onboardingData.businessCurrency || !onboardingData.timezone)) ||
+                    (step === 4 && onboardingData.walletBackend === "nwc" && (!onboardingData.nwcUri || !NWC_URI_REGEX.test(onboardingData.nwcUri)))
                   }
                       className="bg-green-800"
                     >

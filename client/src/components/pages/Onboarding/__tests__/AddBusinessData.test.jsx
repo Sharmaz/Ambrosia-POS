@@ -59,7 +59,7 @@ describe("Step 3 Business Details", () => {
   function remderBusinessDetails(data = defaultData) {
     return render(
       <I18nProvider>
-        <BusinessDetailsStep data={data} onChange={mockChange} />
+        <BusinessDetailsStep businessData={data} onChange={mockChange} />
       </I18nProvider>,
     );
   }
@@ -155,7 +155,7 @@ describe("Step 3 Business Details", () => {
     rerender(
       <I18nProvider>
         <BusinessDetailsStep
-          data={{ ...defaultData, businessLogo: new File(["x"], "logo.png") }}
+          businessData={{ ...defaultData, businessLogo: new File(["x"], "logo.png") }}
           onChange={mockChange}
         />
       </I18nProvider>,

@@ -6,7 +6,7 @@ import { Input, Tooltip } from "@heroui/react";
 import { Eye, EyeOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-export function UserAccountStep({ data, onChange }) {
+export function UserAccountStep({ userAccountData, onChange }) {
   const t = useTranslations();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -14,7 +14,7 @@ export function UserAccountStep({ data, onChange }) {
   const [passwordStrength, setPasswordStrength] = useState(0);
 
   const handlePasswordChange = (password) => {
-    onChange({ ...data, userPassword: password });
+    onChange({ ...userAccountData, userPassword: password });
 
     let strength = 0;
     if (password.length >= 8) strength++;
@@ -24,7 +24,7 @@ export function UserAccountStep({ data, onChange }) {
     setPasswordStrength(strength);
   };
 
-  const passwordsMatch = data.userPassword === data.userPasswordConfirmation;
+  const passwordsMatch = userAccountData.userPassword === userAccountData.userPasswordConfirmation;
 
   const getPasswordStrengthColor = () => {
     if (passwordStrength === 0) return "bg-muted";
@@ -52,8 +52,8 @@ export function UserAccountStep({ data, onChange }) {
           label={t("step2.fields.userNameLabel")}
           type="text"
           placeholder={t("step2.fields.userNamePlaceholder")}
-          value={data.userName}
-          onChange={(e) => onChange({ ...data, userName: e.target.value })}
+          value={userAccountData.userName}
+          onChange={(e) => onChange({ ...userAccountData, userName: e.target.value })}
         />
 
         <Tooltip
@@ -73,10 +73,10 @@ export function UserAccountStep({ data, onChange }) {
               type={showPin ? "text" : "password"}
               placeholder={t("step2.fields.userPinPlaceholder")}
               maxLength={4}
-              value={data.userPin}
+              value={userAccountData.userPin}
               onChange={(e) => {
                 const onlyNumbers = e.target.value.replace(/\D/g, "");
-                onChange({ ...data, userPin: onlyNumbers });
+                onChange({ ...userAccountData, userPin: onlyNumbers });
               }}
               endContent={(
                 <button
@@ -108,7 +108,7 @@ export function UserAccountStep({ data, onChange }) {
               label={t("step2.fields.passwordLabel")}
               type={showPassword ? "text" : "password"}
               placeholder={t("step2.fields.passwordPlaceholder")}
-              value={data.userPassword}
+              value={userAccountData.userPassword}
               onChange={(e) => handlePasswordChange(e.target.value)}
               endContent={(
                 <button
@@ -129,10 +129,10 @@ export function UserAccountStep({ data, onChange }) {
             label={t("step2.fields.confirmPasswordLabel")}
             type={showConfirmPassword ? "text" : "password"}
             placeholder={t("step2.fields.confirmPasswordPlaceholder")}
-            value={data.userPasswordConfirmation}
-            onChange={(e) => onChange({ ...data, userPasswordConfirmation: e.target.value })}
-            isInvalid={data.userPasswordConfirmation && !passwordsMatch}
-            errorMessage={data.userPasswordConfirmation && !passwordsMatch ? t("step2.passwordsDoNotMatch") : ""}
+            value={userAccountData.userPasswordConfirmation}
+            onChange={(e) => onChange({ ...userAccountData, userPasswordConfirmation: e.target.value })}
+            isInvalid={userAccountData.userPasswordConfirmation && !passwordsMatch}
+            errorMessage={userAccountData.userPasswordConfirmation && !passwordsMatch ? t("step2.passwordsDoNotMatch") : ""}
             endContent={(
               <button
                 type="button"
@@ -146,7 +146,7 @@ export function UserAccountStep({ data, onChange }) {
         </div>
 
         <div>
-          {data.userPassword && (
+          {userAccountData.userPassword && (
             <div className="mt-3">
               <div className="flex gap-1 mb-1">
                 {[1, 2, 3, 4].map((i) => (

@@ -27,7 +27,7 @@ describe("Step 4 Summary", () => {
 
   it("renders summary information correctly", async () => {
     await act(async () => {
-      render(<WizardSummary data={baseData} onEdit={mockOnEdit} />);
+      render(<WizardSummary onboardingData={baseData} onEdit={mockOnEdit} />);
     });
 
     expect(screen.getByText("step4.title")).toBeInTheDocument();
@@ -44,7 +44,7 @@ describe("Step 4 Summary", () => {
 
   it("calls onEdit with correct step index", async () => {
     await act(async () => {
-      render(<WizardSummary data={baseData} onEdit={mockOnEdit} />);
+      render(<WizardSummary onboardingData={baseData} onEdit={mockOnEdit} />);
     });
 
     const buttons = screen.getAllByRole("button");
@@ -60,7 +60,7 @@ describe("Step 4 Summary", () => {
 
   it("shows masked password correctly", async () => {
     await act(async () => {
-      render(<WizardSummary data={baseData} onEdit={mockOnEdit} />);
+      render(<WizardSummary onboardingData={baseData} onEdit={mockOnEdit} />);
     });
 
     const masked = "*".repeat(baseData.userPassword.length);
@@ -76,7 +76,7 @@ describe("Step 4 Summary", () => {
     };
 
     await act(async () => {
-      render(<WizardSummary data={dataWithPhoenixdRemote} onEdit={mockOnEdit} />);
+      render(<WizardSummary onboardingData={dataWithPhoenixdRemote} onEdit={mockOnEdit} />);
     });
 
     expect(document.body.textContent).toContain("step4.sections.walletBackend.phoenixdRemote");
@@ -87,7 +87,7 @@ describe("Step 4 Summary", () => {
     const dataWithLocalPhoenixd = { ...baseData, walletBackend: "phoenixd", phoenixdRemote: false };
 
     await act(async () => {
-      render(<WizardSummary data={dataWithLocalPhoenixd} onEdit={mockOnEdit} />);
+      render(<WizardSummary onboardingData={dataWithLocalPhoenixd} onEdit={mockOnEdit} />);
     });
 
     expect(screen.queryByText("step4.sections.walletBackend.phoenixdRemote")).not.toBeInTheDocument();
@@ -98,7 +98,7 @@ describe("Step 4 Summary", () => {
     const dataWithLogo = { ...baseData, businessLogo: file };
 
     await act(async () => {
-      render(<WizardSummary data={dataWithLogo} onEdit={mockOnEdit} />);
+      render(<WizardSummary onboardingData={dataWithLogo} onEdit={mockOnEdit} />);
     });
 
     const logo = screen.getByAltText("Business logo");
