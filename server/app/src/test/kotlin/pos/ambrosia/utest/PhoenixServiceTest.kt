@@ -1587,6 +1587,13 @@ class PhoenixServiceTest {
     }
 
     @Test
+    fun `testCandidateNodeConnection throws PhoenixConnectionException when the candidate node is unreachable`() {
+        assertFailsWith<pos.ambrosia.utils.PhoenixConnectionException> {
+            runBlocking { PhoenixService.testCandidateNodeConnection("http://127.0.0.1:1", "irrelevant-password") }
+        }
+    }
+
+    @Test
     fun `getBalance returns PhoenixBalance on success`() {
         // Arrange
         val mockJsonResponse =

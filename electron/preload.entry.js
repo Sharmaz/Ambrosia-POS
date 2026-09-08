@@ -10,6 +10,7 @@ const INVOKE_CHANNELS = [
   'update:open-release',
   'phoenixd:get-auto-liquidity',
   'phoenixd:set-auto-liquidity',
+  'app:relaunch',
 ];
 
 const RECEIVE_CHANNELS = [

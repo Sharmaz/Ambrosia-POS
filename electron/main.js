@@ -492,6 +492,11 @@ ipcMain.handle('services:get-logs', () => {
   return { logsDir };
 });
 
+ipcMain.handle('app:relaunch', () => {
+  app.relaunch();
+  app.quit();
+});
+
 ipcMain.on(ADMIN_ACTIVITY_NOTIFICATION_CHANNEL, (_event, notificationPayload) => {
   logger.log('[Electron] Admin activity notification IPC received');
   showAdminActivityNotification(notificationPayload);

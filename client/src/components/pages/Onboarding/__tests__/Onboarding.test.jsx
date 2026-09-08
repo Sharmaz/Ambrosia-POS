@@ -99,6 +99,42 @@ async function completeOnboardingWithPhoenixd() {
   });
 }
 
+async function completeOnboardingWithPhoenixdRemote(user, phoenixdUrl, phoenixdPassword) {
+  await act(async () => {
+    fireEvent.click(screen.getByText("buttons.next"));
+  });
+
+  await act(async () => {
+    fireEvent.change(screen.getByPlaceholderText("step2.fields.userNamePlaceholder"), { target: { value: "testuser" } });
+    fireEvent.change(screen.getByPlaceholderText("step2.fields.userPinPlaceholder"), { target: { value: "0000" } });
+    fireEvent.change(screen.getByPlaceholderText("step2.fields.passwordPlaceholder"), { target: { value: "Abcd123$" } });
+    fireEvent.change(screen.getByPlaceholderText("step2.fields.confirmPasswordPlaceholder"), { target: { value: "Abcd123$" } });
+  });
+  await act(async () => {
+    fireEvent.click(screen.getByText("buttons.next"));
+  });
+
+  await act(async () => {
+    fireEvent.change(screen.getByPlaceholderText("step3.fields.businessNamePlaceholder"), { target: { value: "My Business" } });
+  });
+  await act(async () => {
+    fireEvent.click(screen.getByText("buttons.next"));
+  });
+
+  await user.click(screen.getByLabelText("remoteToggleLabel"));
+  await act(async () => {
+    fireEvent.change(screen.getByPlaceholderText("http://100.x.x.x:9740"), { target: { value: phoenixdUrl } });
+    fireEvent.change(screen.getByLabelText("passwordLabel"), { target: { value: phoenixdPassword } });
+  });
+  await act(async () => {
+    fireEvent.click(screen.getByText("buttons.next"));
+  });
+
+  await act(async () => {
+    fireEvent.click(screen.getByText("buttons.finish"));
+  });
+}
+
 const originalError = console.error;
 const originalWarn = console.warn;
 
@@ -415,6 +451,66 @@ describe("Onboarding Wizard", () => {
       await waitFor(() => {
         expect(addToast).toHaveBeenCalledWith(
           expect.objectContaining({ title: "submitOnboardingToast.nwcErrorTitle", color: "danger" }),
+        );
+      });
+    });
+  });
+
+  describe("phoenixd remote onboarding result toast", () => {
+    it("shows the phoenixd remote activated toast when the backend connects successfully", async () => {
+      submitInitialSetup.mockResolvedValueOnce({
+        json: () => Promise.resolve({ phoenixdRemoteSaved: true }),
+      });
+      const user = userEvent.setup();
+
+      await act(async () => {
+        renderOnboarding();
+      });
+
+      await completeOnboardingWithPhoenixdRemote(user, "http://100.1.1.1:9740", "remote-password");
+
+      await waitFor(() => {
+        expect(addToast).toHaveBeenCalledWith(
+          expect.objectContaining({ title: "submitOnboardingToast.phoenixdRemoteSavedTitle", color: "primary" }),
+        );
+      });
+    });
+
+    it("shows an error toast when the remote phoenixd node could not be connected", async () => {
+      submitInitialSetup.mockResolvedValueOnce({
+        json: () => Promise.resolve({ phoenixdRemoteSaved: false }),
+      });
+      const user = userEvent.setup();
+
+      await act(async () => {
+        renderOnboarding();
+      });
+
+      await completeOnboardingWithPhoenixdRemote(user, "http://100.1.1.1:9740", "remote-password");
+
+      await waitFor(() => {
+        expect(addToast).toHaveBeenCalledWith(
+          expect.objectContaining({ title: "submitOnboardingToast.phoenixdRemoteErrorTitle", color: "danger" }),
+        );
+      });
+    });
+
+    it("sends the phoenixd remote fields in the setup payload", async () => {
+      const user = userEvent.setup();
+
+      await act(async () => {
+        renderOnboarding();
+      });
+
+      await completeOnboardingWithPhoenixdRemote(user, "http://100.1.1.1:9740", "remote-password");
+
+      await waitFor(() => {
+        expect(submitInitialSetup).toHaveBeenCalledWith(
+          expect.objectContaining({
+            phoenixdRemote: true,
+            phoenixdUrl: "http://100.1.1.1:9740",
+            phoenixdPassword: "remote-password",
+          }),
         );
       });
     });

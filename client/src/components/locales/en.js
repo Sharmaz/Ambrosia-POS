@@ -121,6 +121,17 @@ const componentsEn = {
     title: "Restart required",
     description: "Please restart the Ambrosia server to finish loading your data.",
     acknowledgeButton: "Got it",
+    countdownDescription: "The application will restart automatically in:",
+    restartNowButton: "Restart now",
+  },
+  phoenixdRemote: {
+    remoteToggleLabel: "Remote phoenixd node",
+    remoteToggleDescription: "Connect to a phoenixd that is already running elsewhere (e.g. via Tailscale) instead of managing a local one.",
+    urlLabel: "Remote node URL",
+    passwordLabel: "Remote node http-password",
+    testButton: "Test connection",
+    testSuccess: "Successfully connected to the remote node",
+    testError: "Could not connect to the remote node — check the URL and password",
   },
 };
 

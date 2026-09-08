@@ -2,6 +2,7 @@ import exportDataEs from "../ExportData/locales/es";
 import importDataEs from "../ImportData/locales/es";
 import lightningEs from "../Lightning/locales/es";
 import nwcConnectionEs from "../NwcConnection/locales/es";
+import phoenixdRemoteCardEs from "../PhoenixdRemote/locales/es";
 import printersEs from "../Printers/locales/es";
 import seedEs from "../Seed/locales/es";
 import storeInfoEs from "../StoreInfo/locales/es";
@@ -102,6 +103,7 @@ const settingsEs = {
   },
   ...lightningEs,
   ...nwcConnectionEs,
+  ...phoenixdRemoteCardEs,
 };
 
 export default settingsEs;

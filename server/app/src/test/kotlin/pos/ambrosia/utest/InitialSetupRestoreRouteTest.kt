@@ -5,7 +5,9 @@ import io.ktor.client.request.forms.formData
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.install
 import io.ktor.server.engine.applicationEnvironment
@@ -165,6 +167,43 @@ class InitialSetupRestoreRouteTest {
 
             val tokenService = TokenService(applicationEnvironment { config = testJwtConfig() })
             assertEquals("onboarding", tokenService.getUserIdFromBackupProgressToken(progressToken, operationId))
+        }
+
+    @Test
+    fun `test-phoenixd-connection returns conflict when initial setup is already completed`() =
+        testApplication {
+            ExposedTestDb.seedConfig("America/Mexico_City")
+            application {
+                install(ContentNegotiation) { json() }
+                handler()
+                configureInitialSetup()
+            }
+
+            val testConnectionResponse =
+                client.post("/initial-setup/test-phoenixd-connection") {
+                    contentType(ContentType.Application.Json)
+                    setBody("""{"phoenixdUrl":"http://127.0.0.1:1","phoenixdPassword":"irrelevant"}""")
+                }
+
+            assertEquals(HttpStatusCode.Conflict, testConnectionResponse.status)
+        }
+
+    @Test
+    fun `test-phoenixd-connection returns service unavailable when the candidate node is unreachable`() =
+        testApplication {
+            application {
+                install(ContentNegotiation) { json() }
+                handler()
+                configureInitialSetup()
+            }
+
+            val testConnectionResponse =
+                client.post("/initial-setup/test-phoenixd-connection") {
+                    contentType(ContentType.Application.Json)
+                    setBody("""{"phoenixdUrl":"http://127.0.0.1:1","phoenixdPassword":"irrelevant"}""")
+                }
+
+            assertEquals(HttpStatusCode.ServiceUnavailable, testConnectionResponse.status)
         }
 
     @Test

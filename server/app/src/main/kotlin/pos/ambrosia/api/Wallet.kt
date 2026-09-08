@@ -18,14 +18,19 @@ import io.ktor.server.routing.post
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 import kotlinx.io.files.Path
+import pos.ambrosia.config.AppConfig
+import pos.ambrosia.config.readConfValues
 import pos.ambrosia.config.replaceConfFileProperty
 import pos.ambrosia.datadir
 import pos.ambrosia.logger
 import pos.ambrosia.models.IncomingPaymentWithRate
 import pos.ambrosia.models.Message
 import pos.ambrosia.models.OutgoingPaymentWithRate
+import pos.ambrosia.models.PhoenixdRemoteStatusResponse
 import pos.ambrosia.models.RolePassword
+import pos.ambrosia.models.TestPhoenixdConnectionRequest
 import pos.ambrosia.models.UpdateNwcUriRequest
+import pos.ambrosia.models.UpdatePhoenixdRemoteRequest
 import pos.ambrosia.models.WalletAuthResponse
 import pos.ambrosia.models.WalletInvoiceRate
 import pos.ambrosia.models.WalletPasswordChangeRequest
@@ -59,6 +64,11 @@ fun Application.configureWallet() {
     val walletAdminNotificationService =
         WalletAdminNotificationService(createConfiguredAdminNotificationService(environment))
     val nwcUri = environment.config.propertyOrNull("nwc-uri")?.getString()
+    val phoenixdRemote =
+        environment.config
+            .propertyOrNull("phoenixd-remote")
+            ?.getString()
+            .toBoolean()
     val backend: LightningBackend =
         if (nwcUri != null) {
             NwcService.create(nwcUri, this) { paymentNotification ->
@@ -68,6 +78,15 @@ fun Application.configureWallet() {
             phoenixService
         }
     ActiveLightningBackend.set(backend)
+    if (nwcUri == null && phoenixdRemote) {
+        val phoenixdUrl = environment.config.propertyOrNull("phoenixd-url")?.getString() ?: ""
+        val phoenixdPassword = environment.config.propertyOrNull("phoenixd-password")?.getString() ?: ""
+        ActiveLightningBackend.startPhoenixPaymentEventsListener(
+            phoenixdUrl,
+            phoenixdPassword,
+            buildPhoenixPaymentReceivedHandler(walletAdminNotificationService),
+        )
+    }
     monitor.subscribe(ApplicationStopping) { ActiveLightningBackend.closeActive() }
 
     val authService = AuthService(environment)
@@ -183,6 +202,46 @@ fun Route.wallet(
             }
             replaceConfFileProperty(Path(datadir, "ambrosia.conf"), "nwc-uri", trimmedNwcUri)
             call.respond(HttpStatusCode.OK, Message("NWC backend reconfigured"))
+        }
+        post("/update-phoenixd-remote") {
+            val updatePhoenixdRemoteRequest = call.receive<UpdatePhoenixdRemoteRequest>()
+            val configFile = Path(datadir, "ambrosia.conf")
+            if (updatePhoenixdRemoteRequest.phoenixdRemote) {
+                val trimmedPhoenixdUrl = updatePhoenixdRemoteRequest.phoenixdUrl?.trim()
+                val trimmedPhoenixdPassword = updatePhoenixdRemoteRequest.phoenixdPassword?.trim()
+                if (trimmedPhoenixdUrl.isNullOrBlank() || trimmedPhoenixdPassword.isNullOrBlank()) {
+                    call.respond(HttpStatusCode.BadRequest, Message("Missing url or password"))
+                    return@post
+                }
+                replaceConfFileProperty(configFile, "phoenixd-remote", "true")
+                replaceConfFileProperty(configFile, "phoenixd-url", trimmedPhoenixdUrl)
+                replaceConfFileProperty(configFile, "phoenixd-password", trimmedPhoenixdPassword)
+                ActiveLightningBackend.reinitializePhoenixBackend(trimmedPhoenixdUrl, trimmedPhoenixdPassword)
+                ActiveLightningBackend.startPhoenixPaymentEventsListener(
+                    trimmedPhoenixdUrl,
+                    trimmedPhoenixdPassword,
+                    buildPhoenixPaymentReceivedHandler(walletAdminNotificationService),
+                )
+                call.respond(HttpStatusCode.OK, Message("Remote phoenixd node configured"))
+            } else {
+                replaceConfFileProperty(configFile, "phoenixd-remote", "false")
+                replaceConfFileProperty(configFile, "phoenixd-url", AppConfig.getLocalPhoenixdUrl())
+                replaceConfFileProperty(configFile, "phoenixd-password", AppConfig.getLocalPhoenixdPassword())
+                call.respond(HttpStatusCode.OK, Message("Switched to local phoenixd — restart required to apply"))
+            }
+        }
+        get("/phoenixd-remote-status") {
+            val phoenixdRemote = readConfValues(Path(datadir, "ambrosia.conf"))["phoenixd-remote"].toBoolean()
+            call.respond(HttpStatusCode.OK, PhoenixdRemoteStatusResponse(phoenixdRemote))
+        }
+        post("/test-phoenixd-connection") {
+            val testConnectionRequest = call.receive<TestPhoenixdConnectionRequest>()
+            val candidateNodeInfo =
+                PhoenixService.testCandidateNodeConnection(
+                    testConnectionRequest.phoenixdUrl,
+                    testConnectionRequest.phoenixdPassword,
+                )
+            call.respond(HttpStatusCode.OK, candidateNodeInfo)
         }
         post("/createinvoice") {
             val createInvoiceRequest = call.receive<CreateInvoiceRequest>()
@@ -423,3 +482,11 @@ fun Route.wallet(
 
 private fun io.ktor.server.application.ApplicationCall.walletActorUserId(): String? =
     principal<JWTPrincipal>()?.getClaim("userId", String::class)
+
+private fun buildPhoenixPaymentReceivedHandler(
+    walletAdminNotificationService: WalletAdminNotificationService,
+): suspend (PaymentNotification) -> Unit =
+    { paymentNotification ->
+        PaymentNotifier.broadcast(paymentNotification)
+        walletAdminNotificationService.notifyIncomingPaymentReceived(paymentNotification)
+    }

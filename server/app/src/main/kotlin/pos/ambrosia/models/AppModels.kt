@@ -78,6 +78,24 @@ data class UpdateNwcUriRequest(
 )
 
 @Serializable
+data class UpdatePhoenixdRemoteRequest(
+    val phoenixdRemote: Boolean,
+    val phoenixdUrl: String? = null,
+    val phoenixdPassword: String? = null,
+)
+
+@Serializable
+data class TestPhoenixdConnectionRequest(
+    val phoenixdUrl: String,
+    val phoenixdPassword: String,
+)
+
+@Serializable
+data class PhoenixdRemoteStatusResponse(
+    val phoenixdRemote: Boolean,
+)
+
+@Serializable
 data class User(
     val id: String? = null,
     val name: String,
@@ -683,6 +701,9 @@ data class InitialSetupRequest(
     val businessLogo: String? = null,
     val businessLogoUrl: String? = null,
     val nwcUri: String? = null,
+    val phoenixdRemote: Boolean? = null,
+    val phoenixdUrl: String? = null,
+    val phoenixdPassword: String? = null,
 )
 
 @Serializable
@@ -691,6 +712,7 @@ data class InitialSetupResponse(
     val userId: String,
     val roleId: String,
     val nwcSaved: Boolean = false,
+    val phoenixdRemoteSaved: Boolean = false,
 )
 
 @Serializable

@@ -2,6 +2,7 @@ import exportDataEn from "../ExportData/locales/en";
 import importDataEn from "../ImportData/locales/en";
 import lightningEn from "../Lightning/locales/en";
 import nwcConnectionEn from "../NwcConnection/locales/en";
+import phoenixdRemoteCardEn from "../PhoenixdRemote/locales/en";
 import printersEn from "../Printers/locales/en";
 import seedEn from "../Seed/locales/en";
 import storeInfoEn from "../StoreInfo/locales/en";
@@ -102,6 +103,7 @@ const settingsEn = {
   },
   ...lightningEn,
   ...nwcConnectionEn,
+  ...phoenixdRemoteCardEn,
 };
 
 export default settingsEn;

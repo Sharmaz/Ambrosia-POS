@@ -41,8 +41,10 @@ class BackendService {
         jarPath,
         `--http-bind-ip=127.0.0.1`,
         `--http-bind-port=${port}`,
-        `--phoenixd-url=http://localhost:${config.phoenixdPort}`,
       ];
+      if (!config.phoenixdRemoteConfigured) {
+        args.push(`--phoenixd-url=http://localhost:${config.phoenixdPort}`);
+      }
 
       // Secrets passed as env vars to avoid exposure in `ps aux` and log files.
       // Java-related env vars are stripped to prevent interference from other JDK/JRE

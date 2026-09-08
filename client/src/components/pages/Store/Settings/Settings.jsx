@@ -15,6 +15,7 @@ import { Language } from "./Language";
 import { LightningCard } from "./Lightning/LightningCard";
 import { NotificationPreferencesCard } from "./Notifications";
 import { NwcConnectionCard } from "./NwcConnection/NwcConnectionCard";
+import { PhoenixdRemoteCard } from "./PhoenixdRemote/PhoenixdRemoteCard";
 import { Printers } from "./Printers";
 import { QRUrl } from "./QRUrl";
 import { SecureConnection } from "./SecureConnection/SecureConnection";
@@ -45,6 +46,7 @@ export function Settings() {
               <ExportData />
               <ImportData />
               <NwcConnectionCard />
+              <PhoenixdRemoteCard />
               <Tutorials />
             </>
           )}

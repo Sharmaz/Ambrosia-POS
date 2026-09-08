@@ -232,6 +232,47 @@ export async function updateNwcUri(nwcUri) {
   return nwcUriUpdateBody;
 }
 
+export async function testPhoenixdConnection(phoenixdUrl, phoenixdPassword) {
+  const testConnectionResponse = await httpClient("/wallet/test-phoenixd-connection", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ phoenixdUrl, phoenixdPassword }),
+    skipForbiddenRedirect: true,
+  });
+  return await parseWalletResponseOrThrow(
+    testConnectionResponse,
+    null,
+    "Could not connect to the phoenixd node",
+  );
+}
+
+export async function updatePhoenixdRemote({ phoenixdRemote, phoenixdUrl, phoenixdPassword }) {
+  const updatePhoenixdRemoteResponse = await httpClient("/wallet/update-phoenixd-remote", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ phoenixdRemote, phoenixdUrl, phoenixdPassword }),
+    skipForbiddenRedirect: true,
+  });
+  return await parseWalletResponseOrThrow(
+    updatePhoenixdRemoteResponse,
+    null,
+    "Could not update the phoenixd connection",
+  );
+}
+
+export async function getPhoenixdRemoteStatus() {
+  const phoenixdRemoteStatusResponse = await httpClient("/wallet/phoenixd-remote-status");
+  return await parseWalletResponseOrThrow(
+    phoenixdRemoteStatusResponse,
+    null,
+    "Could not load the phoenixd remote status",
+  );
+}
+
 export async function getSeed() {
   const seedResponse = await httpClient("/wallet/seed", { skipForbiddenRedirect: true });
   const seedResponseBody = await parseJsonResponse(seedResponse, null);

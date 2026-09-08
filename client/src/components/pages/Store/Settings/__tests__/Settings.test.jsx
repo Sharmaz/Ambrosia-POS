@@ -448,19 +448,20 @@ describe("Settings page", () => {
       expect(screen.getByRole("combobox", { name: "cardCurrency.currencyLabel" })).not.toBeDisabled();
     });
 
-    it("hides Seed, NwcConnection, Tutorials, ExportData, and ImportData for a non-admin role", async () => {
+    it("hides Seed, NwcConnection, PhoenixdRemote, Tutorials, ExportData, and ImportData for a non-admin role", async () => {
       await act(async () => {
         renderSettings();
       });
 
       expect(screen.queryByText("cardSeed.title")).not.toBeInTheDocument();
       expect(screen.queryByText("nwcConnection.manageButton")).not.toBeInTheDocument();
+      expect(screen.queryByText("phoenixdRemoteCard.manageButton")).not.toBeInTheDocument();
       expect(screen.queryByText("cardTours.title")).not.toBeInTheDocument();
       expect(screen.queryByText("cardExportData.title")).not.toBeInTheDocument();
       expect(screen.queryByText("cardImportData.title")).not.toBeInTheDocument();
     });
 
-    it("shows Seed, NwcConnection, Tutorials, ExportData, and ImportData for an admin role", async () => {
+    it("shows Seed, NwcConnection, PhoenixdRemote, Tutorials, ExportData, and ImportData for an admin role", async () => {
       jest.spyOn(useNavigationHook, "useNavigation").mockReturnValue({
         availableFeatures: {},
         availableNavigation: defaultNavigation,
@@ -477,6 +478,7 @@ describe("Settings page", () => {
 
       expect(screen.getByText("cardSeed.title")).toBeInTheDocument();
       expect(screen.getByText("nwcConnection.manageButton")).toBeInTheDocument();
+      expect(screen.getByText("phoenixdRemoteCard.manageButton")).toBeInTheDocument();
       expect(screen.getByText("cardTours.title")).toBeInTheDocument();
       expect(screen.getByText("cardExportData.title")).toBeInTheDocument();
       expect(screen.getByText("cardImportData.title")).toBeInTheDocument();

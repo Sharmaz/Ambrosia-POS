@@ -21,6 +21,9 @@ import {
   getOutgoingTransactions,
   getSeed,
   updateNwcUri,
+  testPhoenixdConnection,
+  updatePhoenixdRemote,
+  getPhoenixdRemoteStatus,
   closeChannel,
 } from "../walletService";
 
@@ -412,6 +415,104 @@ describe("walletService", () => {
         status: 400,
         code: "nwc_connection_failed",
       });
+    });
+  });
+
+  describe("testPhoenixdConnection", () => {
+    it("calls /wallet/test-phoenixd-connection with url and password in body", async () => {
+      httpClient.mockResolvedValue(makeResponse(200));
+      parseJsonResponse.mockResolvedValue({ nodeId: "node-1" });
+
+      await testPhoenixdConnection("http://100.1.1.1:9740", "remote-password");
+
+      expect(httpClient).toHaveBeenCalledWith("/wallet/test-phoenixd-connection", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phoenixdUrl: "http://100.1.1.1:9740", phoenixdPassword: "remote-password" }),
+        skipForbiddenRedirect: true,
+      });
+    });
+
+    it("returns the parsed node info on success", async () => {
+      httpClient.mockResolvedValue(makeResponse(200));
+      parseJsonResponse.mockResolvedValue({ nodeId: "node-1" });
+
+      const testConnectionResponse = await testPhoenixdConnection("http://100.1.1.1:9740", "remote-password");
+
+      expect(testConnectionResponse).toEqual({ nodeId: "node-1" });
+    });
+
+    it("throws with the server message when the response is not ok", async () => {
+      httpClient.mockResolvedValue(makeResponse(503, false));
+      parseJsonResponse.mockResolvedValue({ message: "Lightning node is unavailable" });
+
+      await expect(testPhoenixdConnection("http://100.1.1.1:9740", "wrong-password")).rejects.toMatchObject({
+        message: "Lightning node is unavailable",
+        status: 503,
+      });
+    });
+  });
+
+  describe("updatePhoenixdRemote", () => {
+    it("calls /wallet/update-phoenixd-remote with the given fields", async () => {
+      httpClient.mockResolvedValue(makeResponse(200));
+      parseJsonResponse.mockResolvedValue({ message: "Remote phoenixd node configured" });
+
+      await updatePhoenixdRemote({
+        phoenixdRemote: true,
+        phoenixdUrl: "http://100.1.1.1:9740",
+        phoenixdPassword: "remote-password",
+      });
+
+      expect(httpClient).toHaveBeenCalledWith("/wallet/update-phoenixd-remote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phoenixdRemote: true,
+          phoenixdUrl: "http://100.1.1.1:9740",
+          phoenixdPassword: "remote-password",
+        }),
+        skipForbiddenRedirect: true,
+      });
+    });
+
+    it("returns the parsed response body", async () => {
+      httpClient.mockResolvedValue(makeResponse(200));
+      parseJsonResponse.mockResolvedValue({ message: "Switched to local phoenixd — restart required to apply" });
+
+      const updatePhoenixdRemoteResponse = await updatePhoenixdRemote({ phoenixdRemote: false });
+
+      expect(updatePhoenixdRemoteResponse).toEqual({ message: "Switched to local phoenixd — restart required to apply" });
+    });
+
+    it("throws with the server message when the response is not ok", async () => {
+      httpClient.mockResolvedValue(makeResponse(400, false));
+      parseJsonResponse.mockResolvedValue({ message: "Missing url or password" });
+
+      await expect(updatePhoenixdRemote({ phoenixdRemote: true })).rejects.toMatchObject({
+        message: "Missing url or password",
+        status: 400,
+      });
+    });
+  });
+
+  describe("getPhoenixdRemoteStatus", () => {
+    it("calls GET /wallet/phoenixd-remote-status", async () => {
+      httpClient.mockResolvedValue(makeResponse(200));
+      parseJsonResponse.mockResolvedValue({ phoenixdRemote: true });
+
+      await getPhoenixdRemoteStatus();
+
+      expect(httpClient).toHaveBeenCalledWith("/wallet/phoenixd-remote-status");
+    });
+
+    it("returns the parsed phoenixd remote status", async () => {
+      httpClient.mockResolvedValue(makeResponse(200));
+      parseJsonResponse.mockResolvedValue({ phoenixdRemote: true });
+
+      const phoenixdRemoteStatusResponse = await getPhoenixdRemoteStatus();
+
+      expect(phoenixdRemoteStatusResponse).toEqual({ phoenixdRemote: true });
     });
   });
 
