@@ -61,12 +61,12 @@ export function Onboarding() {
     let isMounted = true;
     const loadStatus = async () => {
       try {
-        const status = await getInitialSetupStatus();
-        const statusData = await parseJsonResponse(status, null);
+        const statusResponse = await getInitialSetupStatus();
+        const statusData = await parseJsonResponse(statusResponse, null);
         if (!isMounted) return;
         setSetupStatus(statusData);
         if (statusData?.needsBusinessType) {
-          setOnboardingData((prev) => ({ ...prev, businessType: "" }));
+          setOnboardingData((previousOnboardingData) => ({ ...previousOnboardingData, businessType: "" }));
         }
       } catch {
         if (!isMounted) return;
@@ -102,8 +102,8 @@ export function Onboarding() {
     }
   };
 
-  const handleDataChange = (newData) => {
-    setOnboardingData((prev) => ({ ...prev, ...newData }));
+  const handleOnboardingDataChange = (updatedOnboardingFields) => {
+    setOnboardingData((previousOnboardingData) => ({ ...previousOnboardingData, ...updatedOnboardingFields }));
   };
 
   const handleComplete = async () => {
@@ -149,9 +149,9 @@ export function Onboarding() {
       let nwcSaved = false;
       let phoenixdRemoteSaved = false;
       try {
-        const body = await setupResponse.json();
-        nwcSaved = Boolean(body?.nwcSaved);
-        phoenixdRemoteSaved = Boolean(body?.phoenixdRemoteSaved);
+        const setupResponseBody = await setupResponse.json();
+        nwcSaved = Boolean(setupResponseBody?.nwcSaved);
+        phoenixdRemoteSaved = Boolean(setupResponseBody?.phoenixdRemoteSaved);
       } catch {}
 
       addRedirectToast({
@@ -242,8 +242,8 @@ export function Onboarding() {
             <div className="bg-white rounded-lg shadow-lg p-4 md:p-8 mb-8">
               {step === 1 && (
               <BusinessTypeStep
-                value={onboardingData.businessType}
-                onChange={(businessType) => handleDataChange({ businessType })}
+                businessType={onboardingData.businessType}
+                onChange={(businessType) => handleOnboardingDataChange({ businessType })}
               />
               )}
 
@@ -267,7 +267,7 @@ export function Onboarding() {
                   userPasswordConfirmation: onboardingData.userPasswordConfirmation,
                   userPin: onboardingData.userPin,
                 }}
-                onChange={(userData) => handleDataChange(userData)}
+                onChange={(updatedUserAccountFields) => handleOnboardingDataChange(updatedUserAccountFields)}
               />
               )}
 
@@ -284,7 +284,7 @@ export function Onboarding() {
                   timezone: onboardingData.timezone,
                   businessLogo: onboardingData.businessLogo,
                 }}
-                onChange={(businessData) => handleDataChange(businessData)}
+                onChange={(updatedBusinessFields) => handleOnboardingDataChange(updatedBusinessFields)}
               />
               )}
 
@@ -297,7 +297,7 @@ export function Onboarding() {
                   phoenixdUrl: onboardingData.phoenixdUrl,
                   phoenixdPassword: onboardingData.phoenixdPassword,
                 }}
-                onChange={(walletData) => handleDataChange(walletData)}
+                onChange={(updatedWalletBackendFields) => handleOnboardingDataChange(updatedWalletBackendFields)}
               />
               )}
 

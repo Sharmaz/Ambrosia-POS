@@ -7,7 +7,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export function UserAccountStep({ userAccountData, onChange }) {
-  const t = useTranslations();
+  const userAccountTranslations = useTranslations();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showPin, setShowPin] = useState(false);
@@ -36,31 +36,31 @@ export function UserAccountStep({ userAccountData, onChange }) {
 
   const getPasswordStrengthText = () => {
     if (passwordStrength === 0) return "";
-    if (passwordStrength === 1) return t("step2.strength.weak");
-    if (passwordStrength === 2) return t("step2.strength.regular");
-    if (passwordStrength === 3) return t("step2.strength.good");
-    return t("step2.strength.strong");
+    if (passwordStrength === 1) return userAccountTranslations("step2.strength.weak");
+    if (passwordStrength === 2) return userAccountTranslations("step2.strength.regular");
+    if (passwordStrength === 3) return userAccountTranslations("step2.strength.good");
+    return userAccountTranslations("step2.strength.strong");
   };
 
   return (
     <div>
-      <h2 className="text-xl md:text-2xl font-bold text-green-900 mb-2">{t("step2.title")}</h2>
-      <p className="text-gray-500 mb-4 md:mb-8">{t("step2.subtitle")}</p>
+      <h2 className="text-xl md:text-2xl font-bold text-green-900 mb-2">{userAccountTranslations("step2.title")}</h2>
+      <p className="text-gray-500 mb-4 md:mb-8">{userAccountTranslations("step2.subtitle")}</p>
 
       <div className="space-y-4 md:space-y-6">
         <Input
-          label={t("step2.fields.userNameLabel")}
+          label={userAccountTranslations("step2.fields.userNameLabel")}
           type="text"
-          placeholder={t("step2.fields.userNamePlaceholder")}
+          placeholder={userAccountTranslations("step2.fields.userNamePlaceholder")}
           value={userAccountData.userName}
-          onChange={(e) => onChange({ ...userAccountData, userName: e.target.value })}
+          onChange={(event) => onChange({ ...userAccountData, userName: event.target.value })}
         />
 
         <Tooltip
           content={(
             <div className="px-1 py-2">
-              <div className="text-small font-bold">{t("step2.fields.userPinLabel")}</div>
-              <div className="text-tiny">{t("step2.tooltips.userPin")}</div>
+              <div className="text-small font-bold">{userAccountTranslations("step2.fields.userPinLabel")}</div>
+              <div className="text-tiny">{userAccountTranslations("step2.tooltips.userPin")}</div>
             </div>
           )}
           showArrow
@@ -69,13 +69,13 @@ export function UserAccountStep({ userAccountData, onChange }) {
         >
           <div className="relative">
             <Input
-              label={t("step2.fields.userPinLabel")}
+              label={userAccountTranslations("step2.fields.userPinLabel")}
               type={showPin ? "text" : "password"}
-              placeholder={t("step2.fields.userPinPlaceholder")}
+              placeholder={userAccountTranslations("step2.fields.userPinPlaceholder")}
               maxLength={4}
               value={userAccountData.userPin}
-              onChange={(e) => {
-                const onlyNumbers = e.target.value.replace(/\D/g, "");
+              onChange={(event) => {
+                const onlyNumbers = event.target.value.replace(/\D/g, "");
                 onChange({ ...userAccountData, userPin: onlyNumbers });
               }}
               endContent={(
@@ -94,8 +94,8 @@ export function UserAccountStep({ userAccountData, onChange }) {
         <Tooltip
           content={(
             <div className="px-1 py-2">
-              <div className="text-small font-bold">{t("step2.fields.passwordLabel")}</div>
-              <div className="text-tiny">{t("step2.tooltips.userPassword")}</div>
+              <div className="text-small font-bold">{userAccountTranslations("step2.fields.passwordLabel")}</div>
+              <div className="text-tiny">{userAccountTranslations("step2.tooltips.userPassword")}</div>
             </div>
           )}
           showArrow
@@ -105,11 +105,11 @@ export function UserAccountStep({ userAccountData, onChange }) {
           <div className="relative">
             <Input
               aria-label="hide-show-password"
-              label={t("step2.fields.passwordLabel")}
+              label={userAccountTranslations("step2.fields.passwordLabel")}
               type={showPassword ? "text" : "password"}
-              placeholder={t("step2.fields.passwordPlaceholder")}
+              placeholder={userAccountTranslations("step2.fields.passwordPlaceholder")}
               value={userAccountData.userPassword}
-              onChange={(e) => handlePasswordChange(e.target.value)}
+              onChange={(event) => handlePasswordChange(event.target.value)}
               endContent={(
                 <button
                   type="button"
@@ -126,13 +126,13 @@ export function UserAccountStep({ userAccountData, onChange }) {
         <div className="relative">
           <Input
             aria-label="confirm-password"
-            label={t("step2.fields.confirmPasswordLabel")}
+            label={userAccountTranslations("step2.fields.confirmPasswordLabel")}
             type={showConfirmPassword ? "text" : "password"}
-            placeholder={t("step2.fields.confirmPasswordPlaceholder")}
+            placeholder={userAccountTranslations("step2.fields.confirmPasswordPlaceholder")}
             value={userAccountData.userPasswordConfirmation}
-            onChange={(e) => onChange({ ...userAccountData, userPasswordConfirmation: e.target.value })}
+            onChange={(event) => onChange({ ...userAccountData, userPasswordConfirmation: event.target.value })}
             isInvalid={userAccountData.userPasswordConfirmation && !passwordsMatch}
-            errorMessage={userAccountData.userPasswordConfirmation && !passwordsMatch ? t("step2.passwordsDoNotMatch") : ""}
+            errorMessage={userAccountData.userPasswordConfirmation && !passwordsMatch ? userAccountTranslations("step2.passwordsDoNotMatch") : ""}
             endContent={(
               <button
                 type="button"
@@ -149,22 +149,22 @@ export function UserAccountStep({ userAccountData, onChange }) {
           {userAccountData.userPassword && (
             <div className="mt-3">
               <div className="flex gap-1 mb-1">
-                {[1, 2, 3, 4].map((i) => (
+                {[1, 2, 3, 4].map((strengthLevel) => (
                   <div
-                    key={i}
+                    key={strengthLevel}
                     className={`h-1 flex-1 rounded-full transition-colors ${
-                      i <= passwordStrength ? getPasswordStrengthColor() : "bg-muted"
+                      strengthLevel <= passwordStrength ? getPasswordStrengthColor() : "bg-muted"
                     }`}
                   />
                 ))}
               </div>
               <p className="text-xs text-muted-foreground">
-                {t("step2.strength.title")}: <span className="font-medium">{getPasswordStrengthText()}</span>
+                {userAccountTranslations("step2.strength.title")}: <span className="font-medium">{getPasswordStrengthText()}</span>
               </p>
             </div>
           )}
           <p className="text-xs text-muted-foreground mt-2">
-            {t("step2.passwordSecure")}
+            {userAccountTranslations("step2.passwordSecure")}
           </p>
         </div>
       </div>

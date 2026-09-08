@@ -26,10 +26,10 @@ afterAll(() => {
 describe("Step 1 Business Type Selection", () => {
   const mockChange = jest.fn();
 
-  function renderBusinessTypeStep(value = "") {
+  function renderBusinessTypeStep(businessType = "") {
     return render(
       <I18nProvider>
-        <BusinessTypeStep value={value} onChange={mockChange} />
+        <BusinessTypeStep businessType={businessType} onChange={mockChange} />
       </I18nProvider>,
     );
   }

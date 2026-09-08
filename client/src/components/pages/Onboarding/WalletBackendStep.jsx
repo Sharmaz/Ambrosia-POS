@@ -26,10 +26,10 @@ export function WalletBackendStep({ walletBackendData, onChange }) {
     });
   };
 
-  const handleUriChange = (val) => {
+  const handleUriChange = (nwcUri) => {
     setUriError("");
-    onChange({ nwcUri: val, walletBackend: "nwc" });
-    if (val && !NWC_URI_REGEX.test(val)) {
+    onChange({ nwcUri, walletBackend: "nwc" });
+    if (nwcUri && !NWC_URI_REGEX.test(nwcUri)) {
       setUriError(walletBackendTranslations("stepWallet.uriInvalid"));
     }
   };

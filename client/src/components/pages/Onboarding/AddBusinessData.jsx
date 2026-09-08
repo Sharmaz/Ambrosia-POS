@@ -21,18 +21,18 @@ export function BusinessDetailsStep({ businessData, onChange }) {
   const CURRENCIES = useMemo(() => (locale === "en" ? CURRENCIES_EN : CURRENCIES_ES), [locale]);
 
   const validateRFC = (rfcValue) => {
-    const upperValue = rfcValue.toUpperCase();
+    const upperCaseRfc = rfcValue.toUpperCase();
     const rfcRegex = /^[A-ZÑ&]{3,4}(?:\d{2})(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])[A-Z0-9]{3}$/;
 
-    if (!upperValue) {
+    if (!upperCaseRfc) {
       setRfcError("");
-    } else if (upperValue.length === 13 && !rfcRegex.test(upperValue)) {
+    } else if (upperCaseRfc.length === 13 && !rfcRegex.test(upperCaseRfc)) {
       setRfcError(businessDetailsTranslations("step3.fields.businessRFCInvalid") || "RFC inválido. Debe tener formato correcto.");
     } else {
       setRfcError("");
     }
 
-    onChange({ ...businessData, businessRFC: upperValue });
+    onChange({ ...businessData, businessRFC: upperCaseRfc });
   };
 
   const handleCurrencyChange = (currencyCode) => {
