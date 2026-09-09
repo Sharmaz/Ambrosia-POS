@@ -11,6 +11,7 @@ IFS=$'\n\t'
 AUTO_YES=false
 INSTALL_SYSTEMD=true
 EXPOSE_LAN=false
+LOCAL_INSTALL=false
 
 for arg in "$@"; do
   case $arg in
@@ -24,6 +25,10 @@ for arg in "$@"; do
       ;;
     --expose-lan)
       EXPOSE_LAN=true
+      shift
+      ;;
+    --local)
+      LOCAL_INSTALL=true
       shift
       ;;
     *)
@@ -76,6 +81,27 @@ print_header() {
   echo "----------------------------------------"
   echo " 🚀 Unified Ambrosia & Phoenixd Installer"
   echo "----------------------------------------"
+}
+
+resolve_repo_root() {
+  local script_path="${BASH_SOURCE[0]}"
+  while [ -L "$script_path" ]; do
+    local script_dir
+    script_dir=$(cd -- "$(dirname -- "$script_path")" &> /dev/null && pwd)
+    script_path=$(readlink "$script_path")
+    [[ $script_path != /* ]] && script_path="$script_dir/$script_path"
+  done
+  local script_dir
+  script_dir=$(cd -- "$(dirname -- "$script_path")" &> /dev/null && pwd)
+  dirname "$script_dir"
+}
+
+require_local_repo_root() {
+  REPO_ROOT=$(resolve_repo_root)
+  if [[ ! -d "$REPO_ROOT/server" || ! -d "$REPO_ROOT/client" ]]; then
+    log_error "--local requires running install.sh from within a cloned ambrosia checkout"
+    exit 1
+  fi
 }
 
 # --- Phoenixd Installation Logic ---
@@ -203,9 +229,13 @@ phoenixd_install() {
 }
 
 phoenixd_install_restart_wrapper() {
-  local wrapper_url="https://raw.githubusercontent.com/${AMBROSIA_REPO}/v${AMBROSIA_TAG}/scripts/run-phoenixd.sh"
-  download_file "$wrapper_url" "$GLOBAL_TEMP_DIR/run-phoenixd.sh"
-  sudo cp "$GLOBAL_TEMP_DIR/run-phoenixd.sh" "$PHOENIXD_INSTALL_DIR/run-phoenixd.sh"
+  if [[ "$LOCAL_INSTALL" == "true" ]]; then
+    sudo cp "$REPO_ROOT/scripts/run-phoenixd.sh" "$PHOENIXD_INSTALL_DIR/run-phoenixd.sh"
+  else
+    local wrapper_url="https://raw.githubusercontent.com/${AMBROSIA_REPO}/v${AMBROSIA_TAG}/scripts/run-phoenixd.sh"
+    download_file "$wrapper_url" "$GLOBAL_TEMP_DIR/run-phoenixd.sh"
+    sudo cp "$GLOBAL_TEMP_DIR/run-phoenixd.sh" "$PHOENIXD_INSTALL_DIR/run-phoenixd.sh"
+  fi
   sudo chmod +x "$PHOENIXD_INSTALL_DIR/run-phoenixd.sh"
   echo "✅ phoenixd restart wrapper installed to $PHOENIXD_INSTALL_DIR/run-phoenixd.sh"
 }
@@ -311,9 +341,20 @@ ambrosia_install() {
   mkdir -p "$AMBROSIA_BIN_DIR" "$AMBROSIA_INSTALL_DIR"
   ambrosia_write_initial_config
 
-  local ambrosia_url="https://github.com/${AMBROSIA_REPO}/releases/download/v${AMBROSIA_TAG}"
-  download_file "${ambrosia_url}/ambrosia-${AMBROSIA_TAG}.jar" "$AMBROSIA_INSTALL_DIR/ambrosia.jar"
-  download_file "https://raw.githubusercontent.com/${AMBROSIA_REPO}/v${AMBROSIA_TAG}/scripts/run-server.sh" "$AMBROSIA_INSTALL_DIR/run-server.sh"
+  if [[ "$LOCAL_INSTALL" == "true" ]]; then
+    local local_jar
+    local_jar=$(ls "$REPO_ROOT"/server/app/build/libs/*.jar 2>/dev/null | head -1)
+    if [[ -z "$local_jar" ]]; then
+      log_error "No local JAR found under $REPO_ROOT/server/app/build/libs/ — run './gradlew jar' in server/ first"
+      exit 1
+    fi
+    cp "$local_jar" "$AMBROSIA_INSTALL_DIR/ambrosia.jar"
+    cp "$REPO_ROOT/scripts/run-server.sh" "$AMBROSIA_INSTALL_DIR/run-server.sh"
+  else
+    local ambrosia_url="https://github.com/${AMBROSIA_REPO}/releases/download/v${AMBROSIA_TAG}"
+    download_file "${ambrosia_url}/ambrosia-${AMBROSIA_TAG}.jar" "$AMBROSIA_INSTALL_DIR/ambrosia.jar"
+    download_file "https://raw.githubusercontent.com/${AMBROSIA_REPO}/v${AMBROSIA_TAG}/scripts/run-server.sh" "$AMBROSIA_INSTALL_DIR/run-server.sh"
+  fi
 
   chmod +x "$AMBROSIA_INSTALL_DIR/ambrosia.jar" "$AMBROSIA_INSTALL_DIR/run-server.sh"
   ln -sf "$AMBROSIA_INSTALL_DIR/run-server.sh" "$AMBROSIA_BIN_DIR/ambrosia"
@@ -370,6 +411,7 @@ EOF
 # --- Client Installation ---
 
 CLIENT_INSTALL_DIR="$HOME/.local/ambrosia/client"
+CLIENT_DIST_DIR="/tmp/ambrosia-client-dist"
 
 client_install() {
   echo "➡️  Starting Ambrosia POS Client installation..."
@@ -385,10 +427,18 @@ client_install() {
 
   mkdir -p "$CLIENT_INSTALL_DIR"
 
-  local client_dist_file="ambrosia-client-${AMBROSIA_TAG}.tar.gz"
-  local client_dist_url="https://github.com/${AMBROSIA_REPO}/releases/download/v${AMBROSIA_TAG}/${client_dist_file}"
-  download_file "$client_dist_url" "$GLOBAL_TEMP_DIR/$client_dist_file"
-  tar -xzf "$GLOBAL_TEMP_DIR/$client_dist_file" -C "$CLIENT_INSTALL_DIR" --strip-components=1
+  if [[ "$LOCAL_INSTALL" == "true" ]]; then
+    if [[ ! -d "$CLIENT_DIST_DIR" ]]; then
+      log_error "No local client build found at $CLIENT_DIST_DIR — run 'make build-client' first"
+      exit 1
+    fi
+    cp -r "$CLIENT_DIST_DIR/." "$CLIENT_INSTALL_DIR/"
+  else
+    local client_dist_file="ambrosia-client-${AMBROSIA_TAG}.tar.gz"
+    local client_dist_url="https://github.com/${AMBROSIA_REPO}/releases/download/v${AMBROSIA_TAG}/${client_dist_file}"
+    download_file "$client_dist_url" "$GLOBAL_TEMP_DIR/$client_dist_file"
+    tar -xzf "$GLOBAL_TEMP_DIR/$client_dist_file" -C "$CLIENT_INSTALL_DIR" --strip-components=1
+  fi
 
   echo "   Installing Node.js dependencies..."
   pushd "$CLIENT_INSTALL_DIR" > /dev/null
@@ -458,7 +508,11 @@ EOF
 # --- Main execution flow ---
 check_dependencies
 print_header
-ambrosia_resolve_tag
+if [[ "$LOCAL_INSTALL" == "true" ]]; then
+  require_local_repo_root
+else
+  ambrosia_resolve_tag
+fi
 phoenixd_install
 ambrosia_install
 client_install
