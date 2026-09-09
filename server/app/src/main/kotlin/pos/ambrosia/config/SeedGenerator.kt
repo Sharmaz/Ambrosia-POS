@@ -18,9 +18,7 @@ import java.security.SecureRandom
 object SeedGenerator {
     val NUM_WORDS: Int = 12
     private const val FALLBACK_WORDLIST_URL =
-        """
-            https://raw.githubusercontent.com/olympus-btc/Ambrosia-POS/main/scripts/eff_large_wordlist.txt
-        """
+        "https://raw.githubusercontent.com/olympus-btc/Ambrosia-POS/main/scripts/eff_large_wordlist.txt"
 
     /**
      * Downloads the wordlist from the fallback URL
