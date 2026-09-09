@@ -44,6 +44,8 @@ services:
     environment:
       NEXT_PUBLIC_API_URL: http://ambrosia:9154
       NEXT_PUBLIC_PORT_API: "9154"
+      HOSTNAME: "0.0.0.0"
+      PORT: "3000"
 
 volumes:
   phoenixd_datadir: 
