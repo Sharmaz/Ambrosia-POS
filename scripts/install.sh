@@ -143,10 +143,10 @@ phoenixd_check_existing() {
 phoenixd_verify_signature() {
   echo "🔐 Verifying package signature and integrity..."
   pushd "$GLOBAL_TEMP_DIR" > /dev/null
-  
+
   local acinq_key_url="https://acinq.co/pgp/padioupm.asc"
   local sig_url="${PHOENIXD_RELEASE_BASE_URL}/SHA256SUMS.asc"
-  
+
   download_file "$acinq_key_url" "padioupm.asc"
   download_file "$sig_url" "SHA256SUMS.asc"
 
@@ -160,7 +160,7 @@ phoenixd_verify_signature() {
     popd > /dev/null
     exit 1
   fi
-  
+
   local sha_cmd="sha256sum"
   if ! command -v sha256sum >/dev/null; then sha_cmd="shasum -a 256"; fi
 
@@ -177,18 +177,20 @@ phoenixd_verify_signature() {
 phoenixd_install() {
   phoenixd_detect_os_arch
   phoenixd_check_existing
-  
+
   echo "Installing phoenixd ${PHOENIXD_TAG}"
   sudo mkdir -p "$PHOENIXD_INSTALL_DIR"
-  
+
   # Download to global temp
   download_file "${PHOENIXD_RELEASE_BASE_URL}/${PHOENIXD_ZIP_FILENAME}" "$GLOBAL_TEMP_DIR/$PHOENIXD_ZIP_FILENAME"
-  
+
   phoenixd_verify_signature
-  
+
   sudo unzip -j -o "$GLOBAL_TEMP_DIR/$PHOENIXD_ZIP_FILENAME" -d "$PHOENIXD_INSTALL_DIR"
   echo "✅ phoenixd installed to $PHOENIXD_INSTALL_DIR"
-  
+
+  phoenixd_install_restart_wrapper
+
   if [[ "$OSTYPE" == "darwin"* ]]; then
     echo "MacOS: Ensure $PHOENIXD_INSTALL_DIR is in your PATH."
     return
@@ -200,6 +202,14 @@ phoenixd_install() {
   fi
 }
 
+phoenixd_install_restart_wrapper() {
+  local wrapper_url="https://raw.githubusercontent.com/${AMBROSIA_REPO}/v${AMBROSIA_TAG}/scripts/run-phoenixd.sh"
+  download_file "$wrapper_url" "$GLOBAL_TEMP_DIR/run-phoenixd.sh"
+  sudo cp "$GLOBAL_TEMP_DIR/run-phoenixd.sh" "$PHOENIXD_INSTALL_DIR/run-phoenixd.sh"
+  sudo chmod +x "$PHOENIXD_INSTALL_DIR/run-phoenixd.sh"
+  echo "✅ phoenixd restart wrapper installed to $PHOENIXD_INSTALL_DIR/run-phoenixd.sh"
+}
+
 phoenixd_setup_systemd() {
   local reply="n"
   if [[ "$AUTO_YES" == true ]]; then reply="y";
@@ -207,7 +217,7 @@ phoenixd_setup_systemd() {
     echo "Do you want to setup a systemd service (requires sudo permission)? (y/n): "
     read -r reply
   fi
-  
+
   if [[ $reply =~ ^[Yy]$ ]]; then
     sudo tee /etc/systemd/system/phoenixd.service > /dev/null << EOF
 [Unit]
@@ -215,7 +225,7 @@ Description=Phoenix Daemon
 After=network.target
 
 [Service]
-ExecStart=$PHOENIXD_INSTALL_DIR/phoenixd --agree-to-terms-of-service
+ExecStart=/bin/bash $PHOENIXD_INSTALL_DIR/run-phoenixd.sh
 User=$USER
 Restart=always
 RestartSec=5
@@ -304,12 +314,12 @@ ambrosia_install() {
   local ambrosia_url="https://github.com/${AMBROSIA_REPO}/releases/download/v${AMBROSIA_TAG}"
   download_file "${ambrosia_url}/ambrosia-${AMBROSIA_TAG}.jar" "$AMBROSIA_INSTALL_DIR/ambrosia.jar"
   download_file "https://raw.githubusercontent.com/${AMBROSIA_REPO}/v${AMBROSIA_TAG}/scripts/run-server.sh" "$AMBROSIA_INSTALL_DIR/run-server.sh"
-  
+
   chmod +x "$AMBROSIA_INSTALL_DIR/ambrosia.jar" "$AMBROSIA_INSTALL_DIR/run-server.sh"
   ln -sf "$AMBROSIA_INSTALL_DIR/run-server.sh" "$AMBROSIA_BIN_DIR/ambrosia"
-  
+
   echo "✅ Ambrosia POS Server installed."
-  
+
   # Setup Path logic (simplified)
   local rc_file=""
   [[ $SHELL == *"zsh"* ]] && rc_file="$HOME/.zshrc"
@@ -327,7 +337,7 @@ ambrosia_install() {
 ambrosia_setup_systemd() {
     local reply="n"
     if [[ "$AUTO_YES" == true ]]; then reply="y";
-    elif [[ -t 0 ]]; then 
+    elif [[ -t 0 ]]; then
         echo "Setup systemd service for Ambrosia Server? (y/n): "
         read -r reply
     fi
@@ -342,6 +352,7 @@ After=network.target
 ExecStart=$AMBROSIA_INSTALL_DIR/run-server.sh
 WorkingDirectory=$AMBROSIA_INSTALL_DIR
 User=$USER
+Environment=AMBROSIA_SERVICE_MANAGED=true
 Restart=always
 RestartSec=5
 LimitNOFILE=4096
@@ -378,12 +389,12 @@ client_install() {
   local client_dist_url="https://github.com/${AMBROSIA_REPO}/releases/download/v${AMBROSIA_TAG}/${client_dist_file}"
   download_file "$client_dist_url" "$GLOBAL_TEMP_DIR/$client_dist_file"
   tar -xzf "$GLOBAL_TEMP_DIR/$client_dist_file" -C "$CLIENT_INSTALL_DIR" --strip-components=1
-  
+
   echo "   Installing Node.js dependencies..."
   pushd "$CLIENT_INSTALL_DIR" > /dev/null
   npm install --production --silent
   popd > /dev/null
-  
+
   echo "✅ Client installed."
 
   # Create wrapper for easier execution
@@ -403,7 +414,7 @@ EOF
 client_setup_systemd() {
     local reply="n"
     if [[ "$AUTO_YES" == true ]]; then reply="y";
-    elif [[ -t 0 ]]; then 
+    elif [[ -t 0 ]]; then
       echo "Setup systemd service for Ambrosia Client? (y/n): "
       read -r reply
     fi
@@ -447,8 +458,8 @@ EOF
 # --- Main execution flow ---
 check_dependencies
 print_header
-phoenixd_install
 ambrosia_resolve_tag
+phoenixd_install
 ambrosia_install
 client_install
 
