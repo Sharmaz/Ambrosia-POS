@@ -249,7 +249,10 @@ phoenixd_install_restart_wrapper() {
     sudo cp "$REPO_ROOT/scripts/run-phoenixd.sh" "$PHOENIXD_INSTALL_DIR/run-phoenixd.sh"
   else
     local wrapper_url="https://raw.githubusercontent.com/${AMBROSIA_REPO}/v${AMBROSIA_TAG}/scripts/run-phoenixd.sh"
-    download_file "$wrapper_url" "$GLOBAL_TEMP_DIR/run-phoenixd.sh"
+    if ! curl -fsSL -o "$GLOBAL_TEMP_DIR/run-phoenixd.sh" "$wrapper_url" 2>/dev/null; then
+      log_info "phoenixd restart wrapper not published at v$AMBROSIA_TAG yet, phoenixd will run directly."
+      return 0
+    fi
     sudo cp "$GLOBAL_TEMP_DIR/run-phoenixd.sh" "$PHOENIXD_INSTALL_DIR/run-phoenixd.sh"
   fi
   sudo chmod +x "$PHOENIXD_INSTALL_DIR/run-phoenixd.sh"
@@ -265,13 +268,17 @@ phoenixd_setup_systemd() {
   fi
 
   if [[ $reply =~ ^[Yy]$ ]]; then
+    local exec_start="$PHOENIXD_INSTALL_DIR/phoenixd --agree-to-terms-of-service"
+    if [[ -f "$PHOENIXD_INSTALL_DIR/run-phoenixd.sh" ]]; then
+      exec_start="/bin/bash $PHOENIXD_INSTALL_DIR/run-phoenixd.sh"
+    fi
     sudo tee /etc/systemd/system/phoenixd.service > /dev/null << EOF
 [Unit]
 Description=Phoenix Daemon
 After=network.target
 
 [Service]
-ExecStart=/bin/bash $PHOENIXD_INSTALL_DIR/run-phoenixd.sh
+ExecStart=$exec_start
 User=$USER
 Restart=always
 RestartSec=5
