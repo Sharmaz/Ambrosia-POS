@@ -546,6 +546,7 @@ install_repo_assets() {
 
   install -m 0755 "$IMAGE_ROOT/common/portal/ambrosia-wifi-portal" "$ROOTFS_MNT/opt/ambrosia/bin/ambrosia-wifi-portal"
   install -m 0755 "$IMAGE_ROOT/common/firstboot/ambrosia-firstboot" "$ROOTFS_MNT/opt/ambrosia/bin/ambrosia-firstboot"
+  install -m 0755 "$REPO_ROOT/scripts/run-phoenixd.sh" "$ROOTFS_MNT/opt/ambrosia/bin/run-phoenixd.sh"
 
   install -m 0644 "$IMAGE_ROOT/common/portal/ambrosia-wifi-portal.service" "$ROOTFS_MNT/etc/systemd/system/ambrosia-wifi-portal.service"
   install -m 0644 "$IMAGE_ROOT/common/firstboot/ambrosia-firstboot.service" "$ROOTFS_MNT/etc/systemd/system/ambrosia-firstboot.service"
@@ -654,6 +655,7 @@ verify_mounted_image() {
   require_nonempty_file "$ROOTFS_MNT/opt/ambrosia/bin/ambrosia-client"
   require_nonempty_file "$ROOTFS_MNT/opt/ambrosia/bin/ambrosia-firstboot"
   require_nonempty_file "$ROOTFS_MNT/opt/ambrosia/bin/ambrosia-wifi-portal"
+  require_nonempty_file "$ROOTFS_MNT/opt/ambrosia/bin/run-phoenixd.sh"
   require_nonempty_file "$ROOTFS_MNT/opt/ambrosia/client/server.js"
   require_sane_javascript_text_file "$ROOTFS_MNT/opt/ambrosia/client/server.js"
   require_sane_json_text_file "$ROOTFS_MNT/opt/ambrosia/client/package.json"
