@@ -74,8 +74,7 @@ export function SystemCard() {
             {supportedTargetEntries.map(([targetName, target]) => (
               <Button
                 key={targetName}
-                variant="bordered"
-                className="border border-red-600 text-red-600"
+                color="danger"
                 onPress={() => setConfirmTarget(targetName)}
                 isLoading={restartingTarget === targetName}
               >
