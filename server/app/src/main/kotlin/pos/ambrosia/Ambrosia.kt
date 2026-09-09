@@ -45,6 +45,7 @@ import pos.ambrosia.services.VapidKeyService
 import pos.ambrosia.services.VapidKeys
 import java.io.File
 import java.security.KeyStore
+import kotlin.system.exitProcess
 
 val userHome = System.getProperty("user.home")
 
@@ -71,6 +72,7 @@ fun scheduleProcessRestart() {
     CoroutineScope(Dispatchers.IO).launch {
         delay(500)
         runningEmbeddedServer?.stopSuspend()
+        exitProcess(0)
     }
 }
 
