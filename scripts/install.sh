@@ -359,7 +359,7 @@ ambrosia_install() {
 
   if [[ "$LOCAL_INSTALL" == "true" ]]; then
     local local_jar
-    local_jar=$(ls "$REPO_ROOT"/server/app/build/libs/*.jar 2>/dev/null | head -1)
+    local_jar=$(find "$REPO_ROOT/server/app/build/libs" -maxdepth 1 -name '*.jar' 2>/dev/null | head -1)
     if [[ -z "$local_jar" ]]; then
       log_error "No local JAR found under $REPO_ROOT/server/app/build/libs/ — run './gradlew jar' in server/ first"
       exit 1
