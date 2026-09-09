@@ -67,7 +67,7 @@ fun main(args: Array<String>) {
     Ambrosia().main(args)
 }
 
-fun scheduleDockerRestart() {
+fun scheduleProcessRestart() {
     CoroutineScope(Dispatchers.IO).launch {
         delay(500)
         runningEmbeddedServer?.stopSuspend()
