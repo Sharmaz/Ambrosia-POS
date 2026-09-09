@@ -104,6 +104,22 @@ require_local_repo_root() {
   fi
 }
 
+build_local_artifacts() {
+  local build_dependencies=("java" "node" "npm")
+  for cmd in "${build_dependencies[@]}"; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+      log_error "Missing required dependency for --local: $cmd (see doc/dependencies.md)"
+      exit 1
+    fi
+  done
+
+  log_info "Building server JAR from local source..."
+  (cd "$REPO_ROOT/server" && ./gradlew jar)
+
+  log_info "Building client from local source..."
+  (cd "$REPO_ROOT/client" && chmod +x package-client.sh && NO_ZIP=1 ./package-client.sh)
+}
+
 # --- Phoenixd Installation Logic ---
 
 PHOENIXD_TAG="0.9.0"
@@ -510,6 +526,7 @@ check_dependencies
 print_header
 if [[ "$LOCAL_INSTALL" == "true" ]]; then
   require_local_repo_root
+  build_local_artifacts
 else
   ambrosia_resolve_tag
 fi
