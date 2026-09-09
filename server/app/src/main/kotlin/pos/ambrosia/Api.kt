@@ -49,6 +49,7 @@ import pos.ambrosia.api.configureShifts
 import pos.ambrosia.api.configureSpaces
 import pos.ambrosia.api.configureStoreOrders
 import pos.ambrosia.api.configureSuppliers
+import pos.ambrosia.api.configureSystem
 import pos.ambrosia.api.configureTables
 import pos.ambrosia.api.configureTicketTemplates
 import pos.ambrosia.api.configureTickets
@@ -127,6 +128,7 @@ class Api {
         }
         configurePaymentWebsocket()
         configureHealth()
+        configureSystem()
     }
 }
 

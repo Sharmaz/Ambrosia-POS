@@ -96,6 +96,12 @@ data class PhoenixdRemoteStatusResponse(
 )
 
 @Serializable
+data class RestartCapabilitiesResponse(
+    val serverRestartSupported: Boolean,
+    val phoenixdRestartSupported: Boolean,
+)
+
+@Serializable
 data class User(
     val id: String? = null,
     val name: String,
