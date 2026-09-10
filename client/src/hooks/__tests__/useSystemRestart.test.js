@@ -19,10 +19,10 @@ describe("useSystemRestart", () => {
 
   describe("initial state", () => {
     it("starts with both capabilities unsupported", () => {
-      const { result } = renderHook(() => useSystemRestart());
+      const { result: hookResult } = renderHook(() => useSystemRestart());
 
-      expect(result.current.serverRestartSupported).toBe(false);
-      expect(result.current.phoenixdRestartSupported).toBe(false);
+      expect(hookResult.current.serverRestartSupported).toBe(false);
+      expect(hookResult.current.phoenixdRestartSupported).toBe(false);
     });
   });
 
@@ -32,69 +32,69 @@ describe("useSystemRestart", () => {
         serverRestartSupported: true,
         phoenixdRestartSupported: false,
       });
-      const { result } = renderHook(() => useSystemRestart());
+      const { result: hookResult } = renderHook(() => useSystemRestart());
 
       await act(async () => {
-        await result.current.loadRestartCapabilities();
+        await hookResult.current.loadRestartCapabilities();
       });
 
-      expect(result.current.serverRestartSupported).toBe(true);
-      expect(result.current.phoenixdRestartSupported).toBe(false);
+      expect(hookResult.current.serverRestartSupported).toBe(true);
+      expect(hookResult.current.phoenixdRestartSupported).toBe(false);
     });
 
     it("sets an error when the request fails", async () => {
       getRestartCapabilities.mockRejectedValue(new Error("network error"));
-      const { result } = renderHook(() => useSystemRestart());
+      const { result: hookResult } = renderHook(() => useSystemRestart());
 
       await act(async () => {
-        await result.current.loadRestartCapabilities();
+        await hookResult.current.loadRestartCapabilities();
       });
 
-      expect(result.current.error).toBe("network error");
+      expect(hookResult.current.error).toBe("network error");
     });
   });
 
   describe("restartServer", () => {
     it("calls the server restart endpoint and returns true on success", async () => {
       restartServer.mockResolvedValue({ message: "Server restarting" });
-      const { result } = renderHook(() => useSystemRestart());
+      const { result: hookResult } = renderHook(() => useSystemRestart());
 
-      let returnValue;
+      let restartSucceeded;
       await act(async () => {
-        returnValue = await result.current.restartServer();
+        restartSucceeded = await hookResult.current.restartServer();
       });
 
       expect(restartServer).toHaveBeenCalledTimes(1);
-      expect(returnValue).toBe(true);
-      expect(result.current.restartingTarget).toBeNull();
+      expect(restartSucceeded).toBe(true);
+      expect(hookResult.current.restartingTarget).toBeNull();
     });
 
     it("sets an error and returns false when the request fails", async () => {
       restartServer.mockRejectedValue(new Error("restart failed"));
-      const { result } = renderHook(() => useSystemRestart());
+      const { result: hookResult } = renderHook(() => useSystemRestart());
 
-      let returnValue;
+      let restartSucceeded;
       await act(async () => {
-        returnValue = await result.current.restartServer();
+        restartSucceeded = await hookResult.current.restartServer();
       });
 
-      expect(returnValue).toBe(false);
-      expect(result.current.error).toBe("restart failed");
+      expect(restartSucceeded).toBe(false);
+      expect(hookResult.current.error).toBe("restart failed");
     });
   });
 
   describe("restartPhoenixd", () => {
     it("calls the phoenixd restart endpoint and returns true on success", async () => {
       restartPhoenixd.mockResolvedValue({ message: "phoenixd restarting" });
-      const { result } = renderHook(() => useSystemRestart());
+      const { result: hookResult } = renderHook(() => useSystemRestart());
 
-      let returnValue;
+      let restartSucceeded;
       await act(async () => {
-        returnValue = await result.current.restartPhoenixd();
+        restartSucceeded = await hookResult.current.restartPhoenixd();
       });
 
       expect(restartPhoenixd).toHaveBeenCalledTimes(1);
-      expect(returnValue).toBe(true);
+      expect(restartSucceeded).toBe(true);
     });
   });
 });

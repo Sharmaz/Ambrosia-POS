@@ -38,9 +38,9 @@ function mockUseSystemRestart(overrides = {}) {
     restartServer: jest.fn().mockResolvedValue(true),
     restartPhoenixd: jest.fn().mockResolvedValue(true),
   };
-  const state = { ...defaults, ...overrides };
-  jest.spyOn(useSystemRestartHook, "useSystemRestart").mockReturnValue(state);
-  return state;
+  const restartState = { ...defaults, ...overrides };
+  jest.spyOn(useSystemRestartHook, "useSystemRestart").mockReturnValue(restartState);
+  return restartState;
 }
 
 describe("SystemCard", () => {
@@ -83,10 +83,10 @@ describe("SystemCard", () => {
     });
 
     it("loads restart capabilities on mount", () => {
-      const state = mockUseSystemRestart();
+      const restartState = mockUseSystemRestart();
       render(<SystemCard />);
 
-      expect(state.loadRestartCapabilities).toHaveBeenCalledTimes(1);
+      expect(restartState.loadRestartCapabilities).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -102,7 +102,7 @@ describe("SystemCard", () => {
     });
 
     it("calls restartServer and shows a success toast on confirm", async () => {
-      const state = mockUseSystemRestart({ serverRestartSupported: true });
+      const restartState = mockUseSystemRestart({ serverRestartSupported: true });
       const { addToast } = require("@heroui/react");
       render(<SystemCard />);
 
@@ -111,7 +111,7 @@ describe("SystemCard", () => {
         fireEvent.click(screen.getByText("confirm"));
       });
 
-      expect(state.restartServer).toHaveBeenCalledTimes(1);
+      expect(restartState.restartServer).toHaveBeenCalledTimes(1);
       expect(addToast).toHaveBeenCalledWith(
         expect.objectContaining({ color: "success", description: "cardSystem.restartServerSuccess" }),
       );
@@ -119,7 +119,7 @@ describe("SystemCard", () => {
     });
 
     it("shows a danger toast when the restart fails", async () => {
-      const state = mockUseSystemRestart({
+      const restartState = mockUseSystemRestart({
         serverRestartSupported: true,
         restartServer: jest.fn().mockResolvedValue(false),
       });
@@ -131,27 +131,27 @@ describe("SystemCard", () => {
         fireEvent.click(screen.getByText("confirm"));
       });
 
-      expect(state.restartServer).toHaveBeenCalledTimes(1);
+      expect(restartState.restartServer).toHaveBeenCalledTimes(1);
       expect(addToast).toHaveBeenCalledWith(
         expect.objectContaining({ color: "danger", description: "cardSystem.restartServerError" }),
       );
     });
 
     it("closes the modal without restarting when cancelled", () => {
-      const state = mockUseSystemRestart({ serverRestartSupported: true });
+      const restartState = mockUseSystemRestart({ serverRestartSupported: true });
       render(<SystemCard />);
 
       fireEvent.click(screen.getByText("cardSystem.restartServerButton"));
       fireEvent.click(screen.getByText("cancel"));
 
-      expect(state.restartServer).not.toHaveBeenCalled();
+      expect(restartState.restartServer).not.toHaveBeenCalled();
       expect(screen.queryByTestId("restart-confirm-modal")).not.toBeInTheDocument();
     });
   });
 
   describe("Restarting phoenixd", () => {
     it("calls restartPhoenixd on confirm", async () => {
-      const state = mockUseSystemRestart({ phoenixdRestartSupported: true });
+      const restartState = mockUseSystemRestart({ phoenixdRestartSupported: true });
       render(<SystemCard />);
 
       fireEvent.click(screen.getByText("cardSystem.restartPhoenixdButton"));
@@ -159,7 +159,7 @@ describe("SystemCard", () => {
         fireEvent.click(screen.getByText("confirm"));
       });
 
-      expect(state.restartPhoenixd).toHaveBeenCalledTimes(1);
+      expect(restartState.restartPhoenixd).toHaveBeenCalledTimes(1);
     });
   });
 });

@@ -15,10 +15,10 @@ class PhoenixdProcessServiceTest {
 
     @Test
     fun `requestRestart returns NoPidFile when the pidfile does not exist`() {
-        val service = PhoenixdProcessService(pidFile = newPidFile())
+        val phoenixdProcessService = PhoenixdProcessService(pidFile = newPidFile())
 
-        assertEquals(PhoenixdRestartResult.NoPidFile, service.requestRestart())
-        assertFalse(service.isRunning())
+        assertEquals(PhoenixdRestartResult.NoPidFile, phoenixdProcessService.requestRestart())
+        assertFalse(phoenixdProcessService.isRunning())
     }
 
     @Test
@@ -26,20 +26,20 @@ class PhoenixdProcessServiceTest {
         val deadProcess = ProcessBuilder("true").start()
         deadProcess.waitFor()
         val pidFile = newPidFile().apply { writeText(deadProcess.pid().toString()) }
-        val service = PhoenixdProcessService(pidFile = pidFile)
+        val phoenixdProcessService = PhoenixdProcessService(pidFile = pidFile)
 
-        assertEquals(PhoenixdRestartResult.NotRunning, service.requestRestart())
-        assertFalse(service.isRunning())
+        assertEquals(PhoenixdRestartResult.NotRunning, phoenixdProcessService.requestRestart())
+        assertFalse(phoenixdProcessService.isRunning())
     }
 
     @Test
     fun `requestRestart signals the live process referenced by the pidfile`() {
         val longRunningProcess = ProcessBuilder("sleep", "30").start()
         val pidFile = newPidFile().apply { writeText(longRunningProcess.pid().toString()) }
-        val service = PhoenixdProcessService(pidFile = pidFile)
+        val phoenixdProcessService = PhoenixdProcessService(pidFile = pidFile)
 
-        assertTrue(service.isRunning())
-        assertEquals(PhoenixdRestartResult.Requested, service.requestRestart())
+        assertTrue(phoenixdProcessService.isRunning())
+        assertEquals(PhoenixdRestartResult.Requested, phoenixdProcessService.requestRestart())
         assertTrue(longRunningProcess.waitFor(5, TimeUnit.SECONDS))
     }
 }
