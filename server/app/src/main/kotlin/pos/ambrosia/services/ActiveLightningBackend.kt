@@ -32,6 +32,8 @@ object ActiveLightningBackend : LightningBackend, PaymentVerifier {
 
     fun isNwcActive(): Boolean = backendReference.get() is NwcService
 
+    fun isAvailable(): Boolean = backendReference.get() != null
+
     fun startPhoenixPaymentEventsListener(
         phoenixdUrl: String,
         phoenixdPassword: String,
