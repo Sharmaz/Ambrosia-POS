@@ -6,15 +6,20 @@ import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.install
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.server.testing.testApplication
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.junit.After
 import org.junit.Before
 import pos.ambrosia.api.configureClients
+import pos.ambrosia.api.configurePayoutAccounts
 import pos.ambrosia.api.configureProjects
 import pos.ambrosia.api.handler
 import pos.ambrosia.services.PermissionsService
@@ -164,6 +169,92 @@ class FreelanceRoutesTest {
         }
 
     @Test
+    fun `payout account routes create list get update and soft delete payout accounts`() =
+        testApplication {
+            val authCookies = installAdminAuth()
+            grantFreelancePermissions("admin-test-role", payoutAccountPermissions)
+            val currencyId = ExposedTestDb.seedCurrency("USD")
+            application {
+                install(ContentNegotiation) { json() }
+                handler()
+                configurePayoutAccounts()
+            }
+
+            val createPayoutAccountResponse =
+                client.post("/payout-accounts") {
+                    withAuthCookies(authCookies)
+                    header(HttpHeaders.ContentType, "application/json")
+                    setBody(
+                        """{
+                            "type":"bank",
+                            "accountHolder":"Jane Doe",
+                            "bankName":"Acme Bank",
+                            "accountNumber":"1234567890",
+                            "currencyId":"$currencyId"
+                        }""",
+                    )
+                }
+            val createdPayoutAccountId =
+                Json
+                    .parseToJsonElement(createPayoutAccountResponse.bodyAsText())
+                    .jsonObject["id"]!!
+                    .jsonPrimitive.content
+            val listPayoutAccountsResponse = client.get("/payout-accounts") { withAuthCookies(authCookies) }
+            val getPayoutAccountResponse =
+                client.get("/payout-accounts/$createdPayoutAccountId") { withAuthCookies(authCookies) }
+            val updatePayoutAccountResponse =
+                client.put("/payout-accounts/$createdPayoutAccountId") {
+                    withAuthCookies(authCookies)
+                    header(HttpHeaders.ContentType, "application/json")
+                    setBody(
+                        """{
+                            "type":"lightning",
+                            "lightningAddress":"freelancer@getalby.com"
+                        }""",
+                    )
+                }
+            val deletePayoutAccountResponse =
+                client.delete("/payout-accounts/$createdPayoutAccountId") { withAuthCookies(authCookies) }
+            val getDeletedPayoutAccountResponse =
+                client.get("/payout-accounts/$createdPayoutAccountId") { withAuthCookies(authCookies) }
+
+            assertEquals(HttpStatusCode.Created, createPayoutAccountResponse.status)
+            assertEquals(HttpStatusCode.OK, listPayoutAccountsResponse.status)
+            assertEquals(HttpStatusCode.OK, getPayoutAccountResponse.status)
+            assertEquals(HttpStatusCode.OK, updatePayoutAccountResponse.status)
+            assertEquals(HttpStatusCode.NoContent, deletePayoutAccountResponse.status)
+            assertEquals(HttpStatusCode.NotFound, getDeletedPayoutAccountResponse.status)
+        }
+
+    @Test
+    fun `payout account routes reject invalid bank and lightning payloads`() =
+        testApplication {
+            val authCookies = installAdminAuth()
+            grantFreelancePermissions("admin-test-role", payoutAccountPermissions)
+            application {
+                install(ContentNegotiation) { json() }
+                handler()
+                configurePayoutAccounts()
+            }
+
+            val invalidBankResponse =
+                client.post("/payout-accounts") {
+                    withAuthCookies(authCookies)
+                    header(HttpHeaders.ContentType, "application/json")
+                    setBody("""{"type":"bank","accountHolder":"Jane Doe"}""")
+                }
+            val invalidLightningResponse =
+                client.post("/payout-accounts") {
+                    withAuthCookies(authCookies)
+                    header(HttpHeaders.ContentType, "application/json")
+                    setBody("""{"type":"lightning","bankName":"Acme Bank","lightningAddress":"freelancer@getalby.com"}""")
+                }
+
+            assertEquals(HttpStatusCode.BadRequest, invalidBankResponse.status)
+            assertEquals(HttpStatusCode.BadRequest, invalidLightningResponse.status)
+        }
+
+    @Test
     fun `freelance routes require matching permissions`() =
         testApplication {
             val authCookies = installAdminAuth()
@@ -205,6 +296,13 @@ class FreelanceRoutesTest {
                 "projects_create",
                 "projects_update",
                 "projects_delete",
+            )
+        val payoutAccountPermissions =
+            listOf(
+                "payout_accounts_read",
+                "payout_accounts_create",
+                "payout_accounts_update",
+                "payout_accounts_delete",
             )
     }
 }

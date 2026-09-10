@@ -576,6 +576,35 @@ data class FreelanceProjectUpsert(
 )
 
 @Serializable
+data class PayoutAccount(
+    val id: String,
+    val type: String,
+    val accountHolder: String? = null,
+    val bankName: String? = null,
+    val accountNumber: String? = null,
+    val currencyId: String? = null,
+    val swift: String? = null,
+    val iban: String? = null,
+    val clabe: String? = null,
+    val lightningAddress: String? = null,
+    val isDeleted: Boolean = false,
+    val createdAt: String,
+)
+
+@Serializable
+data class PayoutAccountUpsert(
+    val type: String,
+    val accountHolder: String? = null,
+    val bankName: String? = null,
+    val accountNumber: String? = null,
+    val currencyId: String? = null,
+    val swift: String? = null,
+    val iban: String? = null,
+    val clabe: String? = null,
+    val lightningAddress: String? = null,
+)
+
+@Serializable
 data class ProductOptionValue(
     val id: String? = null,
     val optionTypeId: String? = null,
