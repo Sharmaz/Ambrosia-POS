@@ -18,7 +18,7 @@ import kotlin.test.assertTrue
 
 class PayoutAccountServiceTest {
     private lateinit var databaseFile: File
-    private val service = PayoutAccountService()
+    private val payoutAccountService = PayoutAccountService()
 
     private val validBankRequest =
         PayoutAccountUpsert(
@@ -45,10 +45,10 @@ class PayoutAccountServiceTest {
     fun `addPayoutAccount returns id for valid bank request`() {
         val currencyId = ExposedTestDb.seedCurrency("USD")
 
-        val payoutAccountId = service.addPayoutAccount(validBankRequest.copy(currencyId = currencyId))
+        val payoutAccountId = payoutAccountService.addPayoutAccount(validBankRequest.copy(currencyId = currencyId))
 
         assertNotNull(payoutAccountId)
-        val payoutAccount = service.getPayoutAccountById(payoutAccountId)
+        val payoutAccount = payoutAccountService.getPayoutAccountById(payoutAccountId)
         assertNotNull(payoutAccount)
         assertEquals("bank", payoutAccount.type)
         assertEquals("Jane Doe", payoutAccount.accountHolder)
@@ -60,16 +60,16 @@ class PayoutAccountServiceTest {
         val currencyId = ExposedTestDb.seedCurrency("USD")
         val validRequest = validBankRequest.copy(currencyId = currencyId)
 
-        assertNull(service.addPayoutAccount(validRequest.copy(accountHolder = "  ")))
-        assertNull(service.addPayoutAccount(validRequest.copy(bankName = "  ")))
-        assertNull(service.addPayoutAccount(validRequest.copy(currencyId = null)))
-        assertNull(service.addPayoutAccount(validRequest.copy(currencyId = UUID.randomUUID().toString())))
+        assertNull(payoutAccountService.addPayoutAccount(validRequest.copy(accountHolder = "  ")))
+        assertNull(payoutAccountService.addPayoutAccount(validRequest.copy(bankName = "  ")))
+        assertNull(payoutAccountService.addPayoutAccount(validRequest.copy(currencyId = null)))
+        assertNull(payoutAccountService.addPayoutAccount(validRequest.copy(currencyId = UUID.randomUUID().toString())))
         assertNull(
-            service.addPayoutAccount(
+            payoutAccountService.addPayoutAccount(
                 validRequest.copy(accountNumber = null, iban = null, clabe = null),
             ),
         )
-        assertNull(service.addPayoutAccount(validRequest.copy(lightningAddress = "user@getalby.com")))
+        assertNull(payoutAccountService.addPayoutAccount(validRequest.copy(lightningAddress = "user@getalby.com")))
     }
 
     @Test
@@ -80,19 +80,19 @@ class PayoutAccountServiceTest {
         val clabeRequest =
             validBankRequest.copy(currencyId = currencyId, accountNumber = null, clabe = "032180000118359719")
 
-        assertNotNull(service.addPayoutAccount(ibanRequest))
-        assertNotNull(service.addPayoutAccount(clabeRequest))
+        assertNotNull(payoutAccountService.addPayoutAccount(ibanRequest))
+        assertNotNull(payoutAccountService.addPayoutAccount(clabeRequest))
     }
 
     @Test
     fun `addPayoutAccount returns id for lightning request with lightning address`() {
         val payoutAccountId =
-            service.addPayoutAccount(
+            payoutAccountService.addPayoutAccount(
                 PayoutAccountUpsert(type = "lightning", lightningAddress = "freelancer@getalby.com"),
             )
 
         assertNotNull(payoutAccountId)
-        val payoutAccount = service.getPayoutAccountById(payoutAccountId)
+        val payoutAccount = payoutAccountService.getPayoutAccountById(payoutAccountId)
         assertNotNull(payoutAccount)
         assertEquals("lightning", payoutAccount.type)
         assertEquals("freelancer@getalby.com", payoutAccount.lightningAddress)
@@ -101,7 +101,7 @@ class PayoutAccountServiceTest {
     @Test
     fun `addPayoutAccount rejects blank lightning address without a local node fallback`() {
         val payoutAccountId =
-            service.addPayoutAccount(PayoutAccountUpsert(type = "lightning", lightningAddress = null))
+            payoutAccountService.addPayoutAccount(PayoutAccountUpsert(type = "lightning", lightningAddress = null))
 
         assertNull(payoutAccountId)
     }
@@ -111,7 +111,7 @@ class PayoutAccountServiceTest {
         ActiveLightningBackend.set(FakeLightningBackend("phoenixd"))
 
         val payoutAccountId =
-            service.addPayoutAccount(PayoutAccountUpsert(type = "lightning", lightningAddress = null))
+            payoutAccountService.addPayoutAccount(PayoutAccountUpsert(type = "lightning", lightningAddress = null))
 
         assertNotNull(payoutAccountId)
     }
@@ -119,7 +119,7 @@ class PayoutAccountServiceTest {
     @Test
     fun `addPayoutAccount rejects lightning request mixing bank fields`() {
         val payoutAccountId =
-            service.addPayoutAccount(
+            payoutAccountService.addPayoutAccount(
                 PayoutAccountUpsert(
                     type = "lightning",
                     lightningAddress = "freelancer@getalby.com",
@@ -132,7 +132,7 @@ class PayoutAccountServiceTest {
 
     @Test
     fun `addPayoutAccount rejects unknown type`() {
-        assertNull(service.addPayoutAccount(validBankRequest.copy(type = "cash")))
+        assertNull(payoutAccountService.addPayoutAccount(validBankRequest.copy(type = "cash")))
     }
 
     @Test
@@ -140,7 +140,7 @@ class PayoutAccountServiceTest {
         ExposedTestDb.seedPayoutAccount()
         ExposedTestDb.seedPayoutAccount(isDeleted = true)
 
-        val payoutAccounts = service.getPayoutAccounts()
+        val payoutAccounts = payoutAccountService.getPayoutAccounts()
 
         assertEquals(1, payoutAccounts.size)
         assertFalse(payoutAccounts[0].isDeleted)
@@ -150,9 +150,9 @@ class PayoutAccountServiceTest {
     fun `getPayoutAccountById returns null for invalid missing or deleted account`() {
         val deletedPayoutAccountId = ExposedTestDb.seedPayoutAccount(isDeleted = true)
 
-        assertNull(service.getPayoutAccountById("not-a-uuid"))
-        assertNull(service.getPayoutAccountById(UUID.randomUUID().toString()))
-        assertNull(service.getPayoutAccountById(deletedPayoutAccountId))
+        assertNull(payoutAccountService.getPayoutAccountById("not-a-uuid"))
+        assertNull(payoutAccountService.getPayoutAccountById(UUID.randomUUID().toString()))
+        assertNull(payoutAccountService.getPayoutAccountById(deletedPayoutAccountId))
     }
 
     @Test
@@ -161,13 +161,13 @@ class PayoutAccountServiceTest {
         val payoutAccountId = ExposedTestDb.seedPayoutAccount(currencyId = currencyId)
 
         val payoutAccountWasUpdated =
-            service.updatePayoutAccount(
+            payoutAccountService.updatePayoutAccount(
                 payoutAccountId,
                 validBankRequest.copy(currencyId = currencyId, accountHolder = "Updated Holder"),
             )
 
         assertTrue(payoutAccountWasUpdated)
-        val payoutAccount = service.getPayoutAccountById(payoutAccountId)
+        val payoutAccount = payoutAccountService.getPayoutAccountById(payoutAccountId)
         assertNotNull(payoutAccount)
         assertEquals("Updated Holder", payoutAccount.accountHolder)
     }
@@ -178,28 +178,28 @@ class PayoutAccountServiceTest {
         val deletedPayoutAccountId = ExposedTestDb.seedPayoutAccount(currencyId = currencyId, isDeleted = true)
         val validRequest = validBankRequest.copy(currencyId = currencyId)
 
-        assertFalse(service.updatePayoutAccount("not-a-uuid", validRequest))
-        assertFalse(service.updatePayoutAccount(UUID.randomUUID().toString(), validRequest))
-        assertFalse(service.updatePayoutAccount(deletedPayoutAccountId, validRequest))
-        assertFalse(service.updatePayoutAccount(deletedPayoutAccountId, validRequest.copy(accountHolder = " ")))
+        assertFalse(payoutAccountService.updatePayoutAccount("not-a-uuid", validRequest))
+        assertFalse(payoutAccountService.updatePayoutAccount(UUID.randomUUID().toString(), validRequest))
+        assertFalse(payoutAccountService.updatePayoutAccount(deletedPayoutAccountId, validRequest))
+        assertFalse(payoutAccountService.updatePayoutAccount(deletedPayoutAccountId, validRequest.copy(accountHolder = " ")))
     }
 
     @Test
     fun `deletePayoutAccount soft deletes account`() {
         val payoutAccountId = ExposedTestDb.seedPayoutAccount()
 
-        val payoutAccountWasDeleted = service.deletePayoutAccount(payoutAccountId)
+        val payoutAccountWasDeleted = payoutAccountService.deletePayoutAccount(payoutAccountId)
 
         assertTrue(payoutAccountWasDeleted)
-        assertNull(service.getPayoutAccountById(payoutAccountId))
+        assertNull(payoutAccountService.getPayoutAccountById(payoutAccountId))
     }
 
     @Test
     fun `deletePayoutAccount returns false for invalid missing or already deleted account`() {
         val deletedPayoutAccountId = ExposedTestDb.seedPayoutAccount(isDeleted = true)
 
-        assertFalse(service.deletePayoutAccount("not-a-uuid"))
-        assertFalse(service.deletePayoutAccount(UUID.randomUUID().toString()))
-        assertFalse(service.deletePayoutAccount(deletedPayoutAccountId))
+        assertFalse(payoutAccountService.deletePayoutAccount("not-a-uuid"))
+        assertFalse(payoutAccountService.deletePayoutAccount(UUID.randomUUID().toString()))
+        assertFalse(payoutAccountService.deletePayoutAccount(deletedPayoutAccountId))
     }
 }

@@ -14,9 +14,9 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 class PayoutAccountService {
-    private fun parseUuid(value: String): UUID? =
+    private fun parseUuid(rawUuid: String): UUID? =
         try {
-            UUID.fromString(value)
+            UUID.fromString(rawUuid)
         } catch (_: IllegalArgumentException) {
             null
         }
