@@ -36,6 +36,7 @@ import pos.ambrosia.api.configureInitialSetup
 import pos.ambrosia.api.configureOrders
 import pos.ambrosia.api.configurePaymentWebsocket
 import pos.ambrosia.api.configurePayments
+import pos.ambrosia.api.configurePayoutAccounts
 import pos.ambrosia.api.configurePermissions
 import pos.ambrosia.api.configurePhoenixWebhook
 import pos.ambrosia.api.configurePrinters
@@ -118,6 +119,7 @@ class Api {
         configureCheckout()
         configureCategories()
         configureClients()
+        configurePayoutAccounts()
         configureProjects()
         configureCurrency()
         configureTimeEntries()
