@@ -506,7 +506,8 @@ client_setup_systemd() {
     sudo tee "/etc/systemd/system/ambrosia-client.service" > /dev/null << EOF
 [Unit]
 Description=Ambrosia POS Client (Next.js)
-After=network.target
+After=network.target ambrosia.service
+Wants=ambrosia.service
 
 [Service]
 User=$USER
