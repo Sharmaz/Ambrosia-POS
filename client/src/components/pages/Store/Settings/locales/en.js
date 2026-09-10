@@ -6,6 +6,7 @@ import phoenixdRemoteCardEn from "../PhoenixdRemote/locales/en";
 import printersEn from "../Printers/locales/en";
 import seedEn from "../Seed/locales/en";
 import storeInfoEn from "../StoreInfo/locales/en";
+import systemEn from "../System/locales/en";
 import ticketTemplatesEn from "../TicketTemplates/locales/en";
 import tutorialsEn from "../Tutorials/locales/en";
 
@@ -94,6 +95,7 @@ const settingsEn = {
       errorMessage: "Failed to save tip settings",
     },
     ...storeInfoEn,
+    ...systemEn,
     ...printersEn,
     ...ticketTemplatesEn,
     ...seedEn,

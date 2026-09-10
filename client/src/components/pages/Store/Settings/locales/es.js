@@ -6,6 +6,7 @@ import phoenixdRemoteCardEs from "../PhoenixdRemote/locales/es";
 import printersEs from "../Printers/locales/es";
 import seedEs from "../Seed/locales/es";
 import storeInfoEs from "../StoreInfo/locales/es";
+import systemEs from "../System/locales/es";
 import ticketTemplatesEs from "../TicketTemplates/locales/es";
 import tutorialsEs from "../Tutorials/locales/es";
 
@@ -94,6 +95,7 @@ const settingsEs = {
       errorMessage: "No se pudo guardar la configuración de propinas",
     },
     ...storeInfoEs,
+    ...systemEs,
     ...printersEs,
     ...ticketTemplatesEs,
     ...seedEs,

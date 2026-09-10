@@ -25,7 +25,7 @@ import pos.ambrosia.models.InitialSetupStatus
 import pos.ambrosia.models.Role
 import pos.ambrosia.models.TestPhoenixdConnectionRequest
 import pos.ambrosia.models.User
-import pos.ambrosia.scheduleDockerRestart
+import pos.ambrosia.scheduleProcessRestart
 import pos.ambrosia.services.ActiveLightningBackend
 import pos.ambrosia.services.BackupService
 import pos.ambrosia.services.ConfigService
@@ -37,7 +37,7 @@ import pos.ambrosia.services.TokenService
 import pos.ambrosia.services.UsersService
 import pos.ambrosia.services.WalletAdminNotificationService
 import pos.ambrosia.utils.InitialSetupException
-import pos.ambrosia.utils.isDockerMode
+import pos.ambrosia.utils.canRestartSelf
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -325,7 +325,7 @@ private fun Route.initialSetupRoutes() {
         backupService.stagedOperationId()?.let { operationId ->
             val tokenService = TokenService(call.application.environment)
             backupService.writeConfirmationToken(tokenService.generateBackupConfirmationToken(operationId))
-            if (call.isDockerMode()) scheduleDockerRestart()
+            if (call.canRestartSelf()) scheduleProcessRestart()
         }
         call.respond(HttpStatusCode.OK)
     }

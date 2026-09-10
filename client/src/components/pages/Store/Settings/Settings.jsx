@@ -21,6 +21,7 @@ import { QRUrl } from "./QRUrl";
 import { SecureConnection } from "./SecureConnection/SecureConnection";
 import { Seed } from "./Seed";
 import { StoreInfo } from "./StoreInfo";
+import { SystemCard } from "./System/SystemCard";
 import { TicketTemplates } from "./TicketTemplates";
 import { Tips } from "./Tips";
 import { Tutorials } from "./Tutorials";
@@ -47,6 +48,7 @@ export function Settings() {
               <ImportData />
               <NwcConnectionCard />
               <PhoenixdRemoteCard />
+              <SystemCard />
               <Tutorials />
             </>
           )}

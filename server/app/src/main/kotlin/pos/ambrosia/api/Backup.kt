@@ -27,13 +27,13 @@ import kotlinx.coroutines.runBlocking
 import pos.ambrosia.logger
 import pos.ambrosia.models.BackupProgressPhase
 import pos.ambrosia.models.RolePassword
-import pos.ambrosia.scheduleDockerRestart
+import pos.ambrosia.scheduleProcessRestart
 import pos.ambrosia.services.AuthService
 import pos.ambrosia.services.BackupService
 import pos.ambrosia.services.ConfigService
 import pos.ambrosia.services.TokenService
 import pos.ambrosia.utils.InvalidCredentialsException
-import pos.ambrosia.utils.isDockerMode
+import pos.ambrosia.utils.canRestartSelf
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.LocalDate
@@ -73,7 +73,7 @@ fun Route.backup(
             call.backupActorUserId() ?: throw InvalidCredentialsException()
             backupService.stagedOperationId()?.let { operationId ->
                 backupService.writeConfirmationToken(tokenService.generateBackupConfirmationToken(operationId))
-                if (call.isDockerMode()) scheduleDockerRestart()
+                if (call.canRestartSelf()) scheduleProcessRestart()
             }
             call.respond(HttpStatusCode.OK)
         }

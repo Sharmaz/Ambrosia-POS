@@ -14,7 +14,7 @@ Group=__RUNTIME_GROUP__
 WorkingDirectory=/home/__RUNTIME_USER__
 Environment=HOME=/home/__RUNTIME_USER__
 ExecStartPre=/bin/sh -c 'if [ -f /home/__RUNTIME_USER__/.phoenix/seed.dat ] && [ ! -s /home/__RUNTIME_USER__/.phoenix/seed.dat ]; then rm -f /home/__RUNTIME_USER__/.phoenix/seed.dat; fi'
-ExecStart=/usr/local/bin/phoenixd --agree-to-terms-of-service
+ExecStart=/opt/ambrosia/bin/run-phoenixd.sh
 Restart=always
 RestartSec=5
 LimitNOFILE=4096
